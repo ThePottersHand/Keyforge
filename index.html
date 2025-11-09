@@ -207,7 +207,7 @@ let data = [], filteredData = [], sets = new Set(), houses = new Set();
 let minSAS = Infinity, maxSAS = -Infinity;
 let selectedDecks = [null, null];
 let pinnedDecks = [];
-let errataFilterDeck = null;  // UUID of deck to show errata only
+let errataFilterDeck = null;  // UUID of deck currently showing errata only
 
 /* --------------------------------------------------------------
    TAB SWITCHING
@@ -253,20 +253,23 @@ function showMessage(text, timeout = 3000) {
 }
 
 /* --------------------------------------------------------------
-   TOGGLE ERRATA VIEW (OPEN + FILTER)
+   TOGGLE ERRATA VIEW – OPENS + FILTERS
    -------------------------------------------------------------- */
 function toggleErrataView(uuid) {
   event.stopPropagation();
+
   const deckDiv = document.querySelector(`.deck[data-uuid="${uuid}"]`);
   if (!deckDiv) return;
 
-  // Open if collapsed
+  // 1. OPEN DECK IF CLOSED
   if (deckDiv.classList.contains('collapsed')) {
     deckDiv.classList.remove('collapsed');
   }
 
-  // Toggle filter
+  // 2. TOGGLE ERRATA FILTER
   errataFilterDeck = (errataFilterDeck === uuid) ? null : uuid;
+
+  // 3. RE-RENDER
   renderSelectedDecks();
 }
 
