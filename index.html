@@ -9,6 +9,7 @@
 :root{
   --bg:#121212; --card:#1e1e1e; --text:#e0e0e0;
   --primary:#d32f2f; --success:#4caf50; --errata:#ff5252;
+  --pinned:#ffeb3b;
   --tab-bg:#2a2a2a; --tab-active:#3a3a3a;
 }
 *{margin:0;padding:0;box-sizing:border-box;}
@@ -16,7 +17,7 @@ body{font-family:Arial,sans-serif;background:var(--bg);color:var(--text);padding
 .container{max-width:1100px;margin:auto;}
 h1{color:#ffeb3b;text-align:center;margin-bottom:16px;font-size:2rem;}
 
-/* ACTION BAR - MINIMIZED ON MOBILE */
+/* ACTION BAR */
 .action-bar{
   background:var(--card);padding:12px 16px;border-radius:12px;
   box-shadow:0 4px 12px rgba(0,0,0,.4);margin-bottom:16px;
@@ -80,20 +81,28 @@ select[multiple]{height:120px;background:#2a2a2a;color:white;}
   transition:.2s;
 }
 .deck-item:hover{transform:translateY(-2px);box-shadow:0 4px 12px rgba(0,0,0,.4);}
-.deck-item h3{font-size:1.05rem;margin:0 0 4px;}
+.deck-item h3{font-size:1.05rem;margin:0 0 4px;display:flex;align-items:center;gap:6px;}
 .deck-item p{font-size:0.85rem;color:#bbb;margin:2px 0;}
 .deck-item .errata-tag{color:var(--errata);font-weight:bold;}
 
 /* DECK (COLLAPSIBLE) */
 .deck{background:var(--card);border-radius:12px;margin:16px 0;box-shadow:0 4px 12px rgba(0,0,0,.4);}
-.deck-header{cursor:pointer;padding:14px 18px;border-bottom:1px solid #333;}
+.deck-header{cursor:pointer;padding:14px 18px;border-bottom:1px solid #333;display:flex;justify-content:space-between;align-items:flex-start;}
+.deck-header .info{flex:1;}
 .deck-header h2{margin:0 0 3px 0;font-size:1.4rem;font-weight:bold;display:flex;align-items:center;gap:6px;}
 .deck-header .errata-tag{color:var(--errata);font-weight:bold;font-size:1rem;}
 .deck-header .deck-info{color:#bbb;font-size:0.9rem;margin:3px 0 0 0;}
 .deck-header .links{margin-top:6px;}
 .deck-header .links a{color:#90caf9;text-decoration:none;font-size:0.85rem;margin-right:16px;}
 .deck-header .links a:hover{text-decoration:underline;}
-.deck-header::after{content:'expand_more';font-family:'Material Icons';font-size:1.6rem;color:#aaa;float:right;margin-top:-34px;}
+.deck-header .pin-btn{
+  background:var(--pinned);color:#000;padding:6px 10px;
+  border:none;border-radius:6px;font-size:0.8rem;cursor:pointer;
+  font-weight:bold;opacity:0.7;transition:.2s;
+}
+.deck-header .pin-btn.pinned{opacity:1;background:#ffeb3b;}
+.deck-header .pin-btn:hover{opacity:1;}
+.deck-header::after{content:'expand_more';font-family:'Material Icons';font-size:1.6rem;color:#aaa;margin-left:8px;}
 .deck.collapsed .deck-header::after{content:'expand_less';}
 .deck-content{max-height:3000px;transition:max-height .5s ease;overflow:hidden;padding:18px;}
 .deck.collapsed .deck-content{max-height:0;padding:0 18px;}
@@ -107,10 +116,18 @@ select[multiple]{height:120px;background:#2a2a2a;color:white;}
 .card{background:#2a2a2a;padding:5px 8px;border-radius:6px;font-size:0.88rem;}
 .errata{color:var(--errata);font-weight:bold;}
 
+/* HOUSE LOGOS IN HEADER */
+.house-logo{width:20px;height:20px;border-radius:50%;}
+
+/* MESSAGES */
+.message{color:#ff5252;text-align:center;margin:12px 0;font-weight:bold;}
+
 /* MISC */
 @media(max-width:600px){
   .filter-grid{grid-template-columns:1fr;}
   .deck-review-list{grid-template-columns:1fr;}
+  .deck-header{flex-direction:column;gap:8px;}
+  .deck-header .pin-btn{margin-top:4px;}
 }
 </style>
 <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
@@ -124,7 +141,7 @@ select[multiple]{height:120px;background:#2a2a2a;color:white;}
     <label>Number of Decks:</label>
     <select id="numDecks">
       <option value="1">1 Deck</option>
-      <option value="2">2 Decks</option>
+      <option value="2" selected>2 Decks</option>
     </select>
     <button id="selectBtn" disabled onclick="pickDecks()">Select Random Deck(s)</button>
   </div>
@@ -132,9 +149,12 @@ select[multiple]{height:120px;background:#2a2a2a;color:white;}
   <!-- SELECTED DECKS (APPEAR HERE) -->
   <div id="results"></div>
 
+  <!-- MESSAGE -->
+  <div id="message" class="message" style="display:none;"></div>
+
   <!-- TABS -->
   <div class="tabs">
-    <div class="tab active" onclick="openTab('filters')">Filters</div>
+    <div class="tab active” onclick="openTab('filters')">Filters</div>
     <div class="tab" onclick="openTab('review')">Deck Review</div>
   </div>
 
@@ -148,7 +168,7 @@ select[multiple]{height:120px;background:#2a2a2a;color:white;}
         <input type="number" id="sasMaxInput" placeholder="Max" style="flex:1">
       </div>
 
-      <div id="diffControl" style="display:none;margin-top:8px;">
+      <div id="diffControl" style="margin-top:8px;">
         <label>Max SAS Difference:</label>
         <input type="number" id="maxDiffInput" min="0" max="30" value="5">
       </div>
@@ -182,6 +202,14 @@ select[multiple]{height:120px;background:#2a2a2a;color:white;}
 
 <script>
 /* --------------------------------------------------------------
+   GLOBAL STATE
+   -------------------------------------------------------------- */
+let data = [], filteredData = [], sets = new Set(), houses = new Set();
+let minSAS = Infinity, maxSAS = -Infinity;
+let selectedDecks = [null, null];  // [deck0, deck1]
+let pinnedDecks = [];              // UUIDs of pinned decks
+
+/* --------------------------------------------------------------
    TAB SWITCHING
    -------------------------------------------------------------- */
 function openTab(tabName) {
@@ -198,6 +226,29 @@ function openTab(tabName) {
 function toggleCollapse(header){
   const deck = header.closest('.deck');
   deck.classList.toggle('collapsed');
+}
+
+/* --------------------------------------------------------------
+   PIN DECK
+   -------------------------------------------------------------- */
+function togglePin(uuid) {
+  const index = pinnedDecks.indexOf(uuid);
+  if (index === -1) {
+    pinnedDecks.push(uuid);
+  } else {
+    pinnedDecks.splice(index, 1);
+  }
+  renderSelectedDecks();
+}
+
+/* --------------------------------------------------------------
+   SHOW MESSAGE
+   -------------------------------------------------------------- */
+function showMessage(text, timeout = 3000) {
+  const msg = document.getElementById('message');
+  msg.textContent = text;
+  msg.style.display = 'block';
+  setTimeout(() => msg.style.display = 'none', timeout);
 }
 
 /* --------------------------------------------------------------
@@ -247,12 +298,6 @@ const HOUSE_ICON_MAP = {
   "unfathomable": "unfathomable", "unfathom": "unfathom",
   "ekwidon": "ekwidon", "geistoid": "geistoid", "redemption": "redemption", "skyborn": "skyborn"
 };
-
-/* --------------------------------------------------------------
-   GLOBAL DATA
-   -------------------------------------------------------------- */
-let data = [], filteredData = [], sets = new Set(), houses = new Set();
-let minSAS = Infinity, maxSAS = -Infinity;
 
 /* --------------------------------------------------------------
    CSV PARSER
@@ -399,9 +444,12 @@ function populateDeckReview(){
     const hasErr = hasErrata(d);
     const item = document.createElement('div');
     item.className = 'deck-item';
-    item.onclick = () => renderDecks([d]);
+    item.onclick = () => replaceUnpinnedDeck(d);
     item.innerHTML = `
-      <h3>${d.name} ${hasErr ? '<span class="errata-tag">(Errata)</span>' : ''}</h3>
+      <h3>
+        ${d.housesStr.split(', ').map(h => `<img src="icons/${h.toLowerCase().replace(' ', '-')}.png" class="house-logo" onerror="this.style.display='none'">`).join('')}
+        ${d.name} ${hasErr ? '<span class="errata-tag">(Errata)</span>' : ''}
+      </h3>
       <p>Set: ${d.set} | SAS: ${d.sas}</p>
       <p>Houses: ${d.housesStr}</p>
     `;
@@ -410,88 +458,62 @@ function populateDeckReview(){
 }
 
 /* --------------------------------------------------------------
-   UI helpers
+   REPLACE UNPINNED DECK
    -------------------------------------------------------------- */
-function selectAll(id){ const s=document.getElementById(id); for(let o of s.options) o.selected=true; applyFilters(); }
-function clearAll(id){ const s=document.getElementById(id); for(let o of s.options) o.selected=false; applyFilters(); }
-
-document.getElementById('numDecks').addEventListener('change',()=>{
-  document.getElementById('diffControl').style.display = 
-    document.getElementById('numDecks').value==='2' ? 'block':'none';
-});
-
-/* Attach filter listeners */
-document.getElementById('sasMinInput').addEventListener('input', applyFilters);
-document.getElementById('sasMaxInput').addEventListener('input', applyFilters);
-document.getElementById('sets').addEventListener('change', applyFilters);
-document.getElementById('houses').addEventListener('change', applyFilters);
-
-/* --------------------------------------------------------------
-   RANDOM SELECTION
-   -------------------------------------------------------------- */
-function pickDecks(){
-  const num = +document.getElementById('numDecks').value;
-  const diff = num===2 ? +document.getElementById('maxDiffInput').value : 0;
-
-  if(filteredData.length < num){
-    document.getElementById('results').innerHTML = `<p style="color:#ff5252;text-align:center;">Not enough decks (found ${filteredData.length}, need ${num})</p>`;
+function replaceUnpinnedDeck(deck) {
+  if (pinnedDecks.length === 2) {
+    showMessage("Unpin a deck first");
     return;
   }
 
-  let chosen = [];
-  if(num===1){
-    chosen = [filteredData[Math.floor(Math.random()*filteredData.length)]];
-  }else{
-    let tries=0;
-    while(tries<2000){
-      const a=filteredData[Math.floor(Math.random()*filteredData.length)];
-      const b=filteredData[Math.floor(Math.random()*filteredData.length)];
-      if(a.uuid!==b.uuid && Math.abs(a.sas-b.sas)<=diff){
-        chosen=[a,b];
-        break;
-      }
-      tries++;
-    }
-    if(chosen.length===0){
-      document.getElementById('results').innerHTML = `<p style="color:#ff5252">Could not find 2 decks within SAS diff ${diff}</p>`;
-      return;
-    }
-  }
-  renderDecks(chosen);
+  const slot = pinnedDecks.length === 0 ? 0 :
+               pinnedDecks[0] === selectedDecks[0]?.uuid ? 1 : 0;
+
+  selectedDecks[slot] = deck;
+  renderSelectedDecks();
 }
 
 /* --------------------------------------------------------------
-   CHECK IF DECK HAS ERRATA
+   RENDER SELECTED DECKS
    -------------------------------------------------------------- */
-function hasErrata(deck){
-  for(const house in deck.cards){
-    if(deck.cards[house].some(card => ERRATA[card])) return true;
-  }
-  return false;
-}
-
-/* --------------------------------------------------------------
-   RENDER DECKS
-   -------------------------------------------------------------- */
-function renderDecks(decks){
+function renderSelectedDecks() {
   const out = document.getElementById('results');
   out.innerHTML = '';
 
-  decks.forEach(d => {
+  const num = +document.getElementById('numDecks').value;
+  for (let i = 0; i < num; i++) {
+    const d = selectedDecks[i];
+    if (!d) {
+      const placeholder = document.createElement('div');
+      placeholder.className = 'deck';
+      placeholder.innerHTML = `<div style="padding:20px;text-align:center;color:#666;font-style:italic;">Slot ${i+1}: No deck selected</div>`;
+      out.appendChild(placeholder);
+      continue;
+    }
+
     const deckDiv = document.createElement('div');
     deckDiv.className = 'deck collapsed';
+    deckDiv.dataset.uuid = d.uuid;
 
     const hasErr = hasErrata(d);
     const errataTag = hasErr ? '<span class="errata-tag">(Errata)</span>' : '';
+    const isPinned = pinnedDecks.includes(d.uuid);
+    const pinText = isPinned ? 'UNPIN' : 'PIN';
 
     deckDiv.innerHTML = `
       <div class="deck-header" onclick="toggleCollapse(this)">
-        <h2>${d.name} ${errataTag}</h2>
-        <p class="deck-info">Set: ${d.set} | SAS: ${d.sas} | Houses: ${d.housesStr}</p>
-        <div class="links">
-          <a href="https://decksofkeyforge.com/decks/${d.uuid}" target="_blank">Decks of Keyforge</a>
-          <a href="https://www.keyforgegame.com/deck-details/${d.uuid}" target="_blank">Master Vault</a>
+        <div class="info">
+          <h2>
+            ${d.housesStr.split(', ').map(h => `<img src="icons/${h.toLowerCase().replace(' ', '-')}.png" class="house-logo" onerror="this.style.display='none'">`).join('')}
+            ${d.name} ${errataTag}
+          </h2>
+          <p class="deck-info">Set: ${d.set} | SAS: ${d.sas} | Houses: ${d.housesStr}</p>
+          <div class="links">
+            <a href="https://decksofkeyforge.com/decks/${d.uuid}" target="_blank">Decks of Keyforge</a>
+            <a href="https://www.keyforgegame.com/deck-details/${d.uuid}" target="_blank">Master Vault</a>
+          </div>
         </div>
+        <button class="pin-btn ${isPinned ? 'pinned' : ''}" onclick="event.stopPropagation(); togglePin('${d.uuid}')">${pinText}</button>
       </div>
       <div class="deck-content">
         <div class="houses-grid">
@@ -517,8 +539,80 @@ function renderDecks(decks){
     `;
 
     out.appendChild(deckDiv);
-  });
+  }
 }
+
+/* --------------------------------------------------------------
+   RANDOM SELECTION
+   -------------------------------------------------------------- */
+function pickDecks(){
+  const num = +document.getElementById('numDecks').value;
+  const diff = num===2 ? +document.getElementById('maxDiffInput').value : 0;
+
+  if(filteredData.length < (num - pinnedDecks.length)){
+    document.getElementById('results').innerHTML = `<p style="color:#ff5252;text-align:center;">Not enough decks (need ${num - pinnedDecks.length} more)</p>`;
+    return;
+  }
+
+  const available = filteredData.filter(d => !pinnedDecks.includes(d.uuid));
+  const toPick = num - pinnedDecks.length;
+
+  let chosen = [];
+  if(toPick === 1){
+    chosen = [available[Math.floor(Math.random()*available.length)]];
+  }else if(toPick === 2){
+    let tries=0;
+    while(tries<2000){
+      const a=available[Math.floor(Math.random()*available.length)];
+      const b=available[Math.floor(Math.random()*available.length)];
+      if(a.uuid!==b.uuid && Math.abs(a.sas-b.sas)<=diff){
+        chosen=[a,b];
+        break;
+      }
+      tries++;
+    }
+    if(chosen.length===0){
+      document.getElementById('results').innerHTML = `<p style="color:#ff5252">Could not find 2 decks within SAS diff ${diff}</p>`;
+      return;
+    }
+  }
+
+  // Fill slots
+  let idx = 0;
+  for(let i=0; i<num; i++){
+    if(pinnedDecks.includes(selectedDecks[i]?.uuid)) continue;
+    selectedDecks[i] = chosen[idx++] || null;
+  }
+
+  renderSelectedDecks();
+}
+
+/* --------------------------------------------------------------
+   CHECK IF DECK HAS ERRATA
+   -------------------------------------------------------------- */
+function hasErrata(deck){
+  for(const house in deck.cards){
+    if(deck.cards[house].some(card => ERRATA[card])) return true;
+  }
+  return false;
+}
+
+/* --------------------------------------------------------------
+   UI helpers
+   -------------------------------------------------------------- */
+function selectAll(id){ const s=document.getElementById(id); for(let o of s.options) o.selected=true; applyFilters(); }
+function clearAll(id){ const s=document.getElementById(id); for(let o of s.options) o.selected=false; applyFilters(); }
+
+document.getElementById('numDecks').addEventListener('change',()=>{
+  document.getElementById('diffControl').style.display = 
+    document.getElementById('numDecks').value==='2' ? 'block':'none';
+});
+
+/* Attach filter listeners */
+document.getElementById('sasMinInput').addEventListener('input', applyFilters);
+document.getElementById('sasMaxInput').addEventListener('input', applyFilters);
+document.getElementById('sets').addEventListener('change', applyFilters);
+document.getElementById('houses').addEventListener('change', applyFilters);
 </script>
 </body>
 </html>
