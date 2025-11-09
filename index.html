@@ -154,7 +154,7 @@ select[multiple]{height:120px;background:#2a2a2a;color:white;}
 
   <!-- TABS -->
   <div class="tabs">
-    <div class="tab active” onclick="openTab('filters')">Filters</div>
+    <div class="tab active" onclick="openTab('filters')">Filters</div>
     <div class="tab" onclick="openTab('review')">Deck Review</div>
   </div>
 
@@ -232,6 +232,7 @@ function toggleCollapse(header){
    PIN DECK
    -------------------------------------------------------------- */
 function togglePin(uuid) {
+  event.stopPropagation(); // Prevent collapse
   const index = pinnedDecks.indexOf(uuid);
   if (index === -1) {
     pinnedDecks.push(uuid);
@@ -550,7 +551,7 @@ function pickDecks(){
   const diff = num===2 ? +document.getElementById('maxDiffInput').value : 0;
 
   if(filteredData.length < (num - pinnedDecks.length)){
-    document.getElementById('results').innerHTML = `<p style="color:#ff5252;text-align:center;">Not enough decks (need ${num - pinnedDecks.length} more)</p>`;
+    showMessage(`Not enough decks (need ${num - pinnedDecks.length} more)`);
     return;
   }
 
@@ -572,7 +573,7 @@ function pickDecks(){
       tries++;
     }
     if(chosen.length===0){
-      document.getElementById('results').innerHTML = `<p style="color:#ff5252">Could not find 2 decks within SAS diff ${diff}</p>`;
+      showMessage(`Could not find 2 decks within SAS diff ${diff}`);
       return;
     }
   }
