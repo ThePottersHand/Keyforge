@@ -14,23 +14,6 @@
 body{font-family:Arial,sans-serif;background:var(--bg);color:var(--text);padding:20px;line-height:1.6;}
 .container{max-width:1100px;margin:auto;}
 h1{color:#ffeb3b;text-align:center;margin-bottom:20px;font-size:2.2rem;}
-
-/* DECK SUMMARY (ABOVE FILTERS) */
-#deckSummary{
-  background:var(--card);padding:16px;border-radius:12px;
-  margin-bottom:20px;box-shadow:0 4px 12px rgba(0,0,0,.4);
-  display:none;
-}
-#deckSummary.visible{display:block;}
-#deckSummary h2{
-  font-size:1.6rem;margin:0 0 8px;display:flex;align-items:center;gap:8px;
-}
-#deckSummary .errata-tag{color:var(--errata);font-weight:bold;font-size:0.95rem;}
-#deckSummary .meta{font-size:1rem;margin:8px 0;}
-#deckSummary .links a{color:#90caf9;text-decoration:none;margin-right:15px;font-size:0.9rem;}
-#deckSummary .links a:hover{text-decoration:underline;}
-
-/* CONTROLS */
 .controls{background:var(--card);padding:20px;border-radius:12px;margin-bottom:20px;box-shadow:0 4px 12px rgba(0,0,0,.4);}
 
 /* COLLAPSIBLE DECK */
@@ -60,14 +43,25 @@ h1{color:#ffeb3b;text-align:center;margin-bottom:20px;font-size:2.2rem;}
   display:grid;grid-template-columns:repeat(auto-fit, minmax(280px, 1fr));gap:20px;
   margin-top:16px;
 }
-.house{text-align:center;}
+.house{
+  text-align:center;
+}
 .house img{width:60px;height:60px;border-radius:50%;background:#333;padding:4px;}
 .house h3{margin:8px 0 4px;font-size:1.3rem;color:#ffeb3b;}
-.house-cards{display:flex;flex-direction:column;gap:6px;text-align:left;}
-.card{background:#2a2a2a;padding:6px 10px;border-radius:6px;font-size:0.92rem;}
+.house-cards{
+  display:flex;flex-direction:column;gap:6px;text-align:left;
+}
+.card{
+  background:#2a2a2a;padding:6px 10px;border-radius:6px;font-size:0.92rem;
+}
 .errata{color:var(--errata);font-weight:bold;}
 
-/* FILTERS */
+/* LINKS */
+.links{margin-top:8px;}
+.links a{color:#90caf9;text-decoration:none;margin-right:15px;font-size:0.9rem;}
+.links a:hover{text-decoration:underline;}
+
+/* CONTROLS */
 .mode-toggle{display:flex;gap:15px;margin-bottom:15px;}
 .mode-toggle label input{margin-right:6px;}
 label{display:block;margin:12px 0 6px;font-weight:bold;font-size:1rem;}
@@ -91,13 +85,6 @@ button:hover{background:#b71c1c;}
 <body>
 <div class="container">
   <h1>Keyforge Deck Selector</h1>
-
-  <!-- DECK SUMMARY (ABOVE FILTERS) -->
-  <div id="deckSummary">
-    <h2 id="summaryName"></h2>
-    <div class="meta" id="summaryMeta"></div>
-    <div class="links" id="summaryLinks"></div>
-  </div>
 
   <div class="controls">
     <p class="loading" id="loading">Loading decks from CSV…</p>
@@ -231,7 +218,6 @@ const HOUSE_ICON_MAP = {
    -------------------------------------------------------------- */
 let data = [], sets = new Set(), houses = new Set();
 let minSAS = Infinity, maxSAS = -Infinity;
-let currentDeck = null;  // For summary
 
 /* --------------------------------------------------------------
    CSV PARSER
@@ -384,24 +370,6 @@ document.getElementById('numDecks').addEventListener('change',()=>{
 });
 
 /* --------------------------------------------------------------
-   SHOW DECK SUMMARY (ABOVE FILTERS)
-   -------------------------------------------------------------- */
-function showDeckSummary(deck){
-  currentDeck = deck;
-  const hasErr = hasErrata(deck);
-  const errataTag = hasErr ? '<span class="errata-tag">(Errata)</span>' : '';
-
-  document.getElementById('summaryName').innerHTML = `${deck.name} ${errataTag}`;
-  document.getElementById('summaryMeta').innerHTML = 
-    `<strong>Set:</strong> ${deck.set} | <strong>SAS:</strong> ${deck.sas} | <strong>Houses:</strong> ${deck.housesStr}`;
-  document.getElementById('summaryLinks').innerHTML = `
-    <a href="https://decksofkeyforge.com/decks/${deck.uuid}" target="_blank">Decks of Keyforge</a>
-    <a href="https://www.keyforgegame.com/deck-details/${deck.uuid}" target="_blank">Master Vault</a>
-  `;
-  document.getElementById('deckSummary').classList.add('visible');
-}
-
-/* --------------------------------------------------------------
    RANDOM SELECTION
    -------------------------------------------------------------- */
 function pickDecks(){
@@ -422,7 +390,6 @@ function pickDecks(){
 
   if(pool.length<num){
     document.getElementById('results').innerHTML = `<p style="color:#ff5252;text-align:center;">Not enough decks (found ${pool.length}, need ${num})</p>`;
-    document.getElementById('deckSummary').classList.remove('visible');
     return;
   }
 
@@ -442,13 +409,9 @@ function pickDecks(){
     }
     if(chosen.length===0){
       document.getElementById('results').innerHTML = `<p style="color:#ff5252">Could not find 2 decks within SAS diff ${diff}</p>`;
-      document.getElementById('deckSummary').classList.remove('visible');
       return;
     }
   }
-
-  // Show summary for first deck only (or both if you want)
-  showDeckSummary(chosen[0]);
   renderDecks(chosen);
 }
 
@@ -458,10 +421,7 @@ function pickDecks(){
 function showManualDeck(){
   const uuid = document.getElementById('manualDeckList').value;
   const deck = data.find(d=>d.uuid===uuid);
-  if(deck){
-    showDeckSummary(deck);
-    renderDecks([deck]);
-  }
+  if(deck) renderDecks([deck]);
 }
 
 /* --------------------------------------------------------------
@@ -475,7 +435,7 @@ function hasErrata(deck){
 }
 
 /* --------------------------------------------------------------
-   RENDER DECKS – COLLAPSIBLE
+   RENDER DECKS – ONE COLLAPSIBLE SECTION PER DECK
    -------------------------------------------------------------- */
 function renderDecks(decks){
   const out = document.getElementById('results');
@@ -483,16 +443,21 @@ function renderDecks(decks){
 
   decks.forEach(d => {
     const deckDiv = document.createElement('div');
-    deckDiv.className = 'deck collapsed';
+    deckDiv.className = 'deck collapsed';  // Start collapsed
 
     const hasErr = hasErrata(d);
     const errataTag = hasErr ? '<span class="errata-tag">(Errata)</span>' : '';
 
     deckDiv.innerHTML = `
       <div class="deck-header" onclick="toggleCollapse(this)">
-        <h2>Full Card List ${errataTag}</h2>
+        <h2>${d.name} ${errataTag}</h2>
       </div>
       <div class="deck-content">
+        <p><strong>Set:</strong> ${d.set} | <strong>SAS:</strong> ${d.sas} | <strong>Houses:</strong> ${d.housesStr}</p>
+        <div class="links">
+          <a href="https://decksofkeyforge.com/decks/${d.uuid}" target="_blank">Decks of Keyforge</a>
+          <a href="https://www.keyforgegame.com/deck-details/${d.uuid}" target="_blank">Master Vault</a>
+        </div>
         <div class="houses-grid">
           ${Object.entries(d.cards).map(([house, cards]) => {
             const hKey = house.toLowerCase();
