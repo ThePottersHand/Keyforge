@@ -177,6 +177,28 @@ const ERRATA = {
 };
 
 /* --------------------------------------------------------------
+   HOUSE TO ICON MAPPING
+   -------------------------------------------------------------- */
+const HOUSE_ICON_MAP = {
+  "logos":          "logos",
+  "sanctum":        "sanctum",
+  "shadows":        "shadows",
+  "dis":            "dis",
+  "brobnar":        "brobnar",
+  "untamed":        "untamed",
+  "mars":           "mars",
+  "saurian":        "saurian",
+  "star":           "star-alliance",
+  "staralliance":   "star-alliance",
+  "unfathomable":   "unfathomable",
+  "unfathom":       "unfathom",
+  "ekwidon":        "ekwidon",
+  "geistoid":       "geistoid",
+  "redemption":     "redemption",
+  "skyborn":        "skyborn"
+};
+
+/* --------------------------------------------------------------
    GLOBAL DATA
    -------------------------------------------------------------- */
 let data = [], sets = new Set(), houses = new Set();
@@ -413,14 +435,15 @@ function renderDecks(decks){
     houseContainer.style.justifyContent = 'center';
 
     Object.entries(d.cards).forEach(([house,cards])=>{
-      const hLow = house.toLowerCase();
+      const hKey = house.toLowerCase();
+      const iconName = HOUSE_ICON_MAP[hKey] || 'default';
 
       const houseDiv = document.createElement('div');
       houseDiv.style.flex = '1 1 300px';
       houseDiv.style.minWidth = '250px';
       houseDiv.innerHTML = `
         <div class="house">
-          <img src="icons/${hLow}.png" alt="${house}" onerror="this.src='icons/default.png'">
+          <img src="icons/${iconName}.png" alt="${house}" onerror="this.src='icons/default.png'">
           <h3>${house}</h3>
         </div>
         <div class="house-cards">
