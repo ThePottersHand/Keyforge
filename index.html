@@ -19,7 +19,7 @@ h1{color:#ffeb3b;text-align:center;margin-bottom:20px;font-size:2.2rem;}
 /* ACTION BAR */
 .action-bar{
   background:var(--card);padding:16px;border-radius:12px;
-  box-shadow:0 4px 12px rgba(0,0,0,.4);margin-bottom:20px;
+  box-shadow:0 4px 12px rgba(0,0,0,.4);margin-bottom:12px;
   display:flex;gap:15px;align-items:center;flex-wrap:wrap;
 }
 .action-bar label{font-weight:bold;}
@@ -31,6 +31,12 @@ h1{color:#ffeb3b;text-align:center;margin-bottom:20px;font-size:2.2rem;}
 }
 .action-bar button:hover{background:#b71c1c;}
 .action-bar button:disabled{background:#666;cursor:not-allowed;}
+
+/* LOADED DECKS INFO */
+.loaded-info{
+  text-align:center;color:#ffeb3b;font-style:italic;
+  margin:12px 0 16px;font-size:1.1rem;
+}
 
 /* TABS */
 .tabs{
@@ -101,7 +107,6 @@ select[multiple]{height:130px;background:#2a2a2a;color:white;}
 .errata{color:var(--errata);font-weight:bold;}
 
 /* MISC */
-.loading{color:#ffeb3b;font-style:italic;text-align:center;margin-bottom:15px;}
 @media(max-width:800px){
   .filter-grid{grid-template-columns:1fr;}
   .action-bar{flex-direction:column;}
@@ -125,14 +130,17 @@ select[multiple]{height:130px;background:#2a2a2a;color:white;}
     <button id="selectBtn" disabled onclick="pickDecks()">Select Random Deck(s)</button>
   </div>
 
+  <!-- LOADED DECKS INFO -->
+  <div class="loaded-info" id="loadedInfo">Loading decks from CSV…</div>
+
   <!-- TABS -->
   <div class="tabs">
-    <div class="tab active" onclick="openTab('random')">Randomizer</div>
+    <div class="tab active" onclick="openTab('filters')">Filters</div>
     <div class="tab" onclick="openTab('review')">Deck Review</div>
   </div>
 
   <!-- TAB CONTENT -->
-  <div id="random" class="tab-content active">
+  <div id="filters" class="tab-content active">
     <div class="filter-section">
       <label>SAS Range:</label>
       <div style="display:flex;gap:10px;align-items:center;">
@@ -143,7 +151,7 @@ select[multiple]{height:130px;background:#2a2a2a;color:white;}
 
       <div id="diffControl" style="display:none;margin-top:10px;">
         <label>Max SAS Difference:</label>
-        <input type=" پیدا number" id="maxDiffInput" min="0" max="30" value="5">
+        <input type="number" id="maxDiffInput" min="0" max="30" value="5">
       </div>
 
       <div class="filter-grid">
@@ -168,7 +176,6 @@ select[multiple]{height:130px;background:#2a2a2a;color:white;}
   </div>
 
   <div id="review" class="tab-content">
-    <p class="loading" id="loading">Loading decks from CSV…</p>
     <div id="deckReviewList" class="deck-review-list"></div>
   </div>
 
@@ -184,6 +191,7 @@ function openTab(tabName) {
   document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
   document.querySelector(`.tab[onclick="openTab('${tabName}')"]`).classList.add('active');
   document.getElementById(tabName).classList.add('active');
+  if (tabName === 'review') populateDeckReview();
 }
 
 /* --------------------------------------------------------------
@@ -321,18 +329,18 @@ fetch('decks_data_fixed.csv')
       return {uuid,name,set,housesStr,houseList,sas,cards};
     });
 
-    document.getElementById('loading').textContent = `Loaded ${data.length} decks.`;
+    document.getElementById('loadedInfo').textContent = `Loaded ${data.length} decks.`;
     document.getElementById('selectBtn').disabled = false;
 
     document.getElementById('sasMinInput').placeholder = minSAS;
     document.getElementById('sasMaxInput').placeholder = maxSAS;
 
     fillFilters();
-    populateDeckReview();
+    populateDeckReview(); // Initial load
   })
   .catch(err=>{
     console.error(err);
-    document.getElementById('loading').innerHTML = `
+    document.getElementById('loadedInfo').innerHTML = `
       <span style="color:#ff5252">
         Failed to load <b>decks_data_fixed.csv</b>.<br>
         Run via a local server:<br>
@@ -361,16 +369,40 @@ function fillFilters(){
 }
 
 /* --------------------------------------------------------------
-   DECK REVIEW – ALL DECKS BY SET → NAME
+   GET CURRENT FILTERS
+   -------------------------------------------------------------- */
+function getFilteredDecks() {
+  const minInput = document.getElementById('sasMinInput').value;
+  const maxInput = document.getElementById('sasMaxInput').value;
+  const min = minInput ? +minInput : minSAS;
+  const max = maxInput ? +maxInput : maxSAS;
+  const selSets = Array.from(document.getElementById('sets').selectedOptions).map(o=>o.value);
+  const selHouses = Array.from(document.getElementById('houses').selectedOptions).map(o=>o.value.toLowerCase());
+
+  return data.filter(d =>
+    d.sas >= min && d.sas <= max &&
+    (selSets.length === 0 || selSets.includes(d.set)) &&
+    (selHouses.length === 0 || selHouses.every(h => d.houseList.includes(h)))
+  );
+}
+
+/* --------------------------------------------------------------
+   DECK REVIEW – FILTERED DECKS
    -------------------------------------------------------------- */
 function populateDeckReview(){
   const container = document.getElementById('deckReviewList');
   container.innerHTML = '';
 
-  const sorted = [...data].sort((a,b) => {
+  const filtered = getFilteredDecks();
+  const sorted = filtered.sort((a,b) => {
     if(a.set !== b.set) return a.set.localeCompare(b.set);
     return a.name.localeCompare(b.name);
   });
+
+  if (sorted.length === 0) {
+    container.innerHTML = '<p style="text-align:center;color:#aaa;">No decks match current filters.</p>';
+    return;
+  }
 
   sorted.forEach(d => {
     const hasErr = hasErrata(d);
@@ -398,37 +430,34 @@ document.getElementById('numDecks').addEventListener('change',()=>{
 });
 
 /* --------------------------------------------------------------
+   UPDATE REVIEW ON FILTER CHANGE
+   -------------------------------------------------------------- */
+document.querySelectorAll('#filters input, #filters select').forEach(el => {
+  el.addEventListener('change', populateDeckReview);
+  el.addEventListener('input', populateDeckReview);
+});
+
+/* --------------------------------------------------------------
    RANDOM SELECTION
    -------------------------------------------------------------- */
 function pickDecks(){
   const num = +document.getElementById('numDecks').value;
-  const minInput = document.getElementById('sasMinInput').value;
-  const maxInput = document.getElementById('sasMaxInput').value;
-  const min = minInput ? +minInput : minSAS;
-  const max = maxInput ? +maxInput : maxSAS;
-  const selSets = Array.from(document.getElementById('sets').selectedOptions).map(o=>o.value);
-  const selHouses = Array.from(document.getElementById('houses').selectedOptions).map(o=>o.value.toLowerCase());
-  const diff = num===2 ? +document.getElementById('maxDiffInput').value : 0;
+  const filtered = getFilteredDecks();
 
-  let pool = data.filter(d=>
-    d.sas>=min && d.sas<=max &&
-    (selSets.length===0 || selSets.includes(d.set)) &&
-    (selHouses.length===0 || selHouses.every(h=>d.houseList.includes(h)))
-  );
-
-  if(pool.length<num){
-    document.getElementById('results').innerHTML = `<p style="color:#ff5252;text-align:center;">Not enough decks (found ${pool.length}, need ${num})</p>`;
+  if(filtered.length < num){
+    document.getElementById('results').innerHTML = `<p style="color:#ff5252;text-align:center;">Not enough decks (found ${filtered.length}, need ${num})</p>`;
     return;
   }
 
   let chosen = [];
   if(num===1){
-    chosen = [pool[Math.floor(Math.random()*pool.length)]];
+    chosen = [filtered[Math.floor(Math.random()*filtered.length)]];
   }else{
     let tries=0;
+    const diff = +document.getElementById('maxDiffInput').value;
     while(tries<2000){
-      const a=pool[Math.floor(Math.random()*pool.length)];
-      const b=pool[Math.floor(Math.random()*pool.length)];
+      const a=filtered[Math.floor(Math.random()*filtered.length)];
+      const b=filtered[Math.floor(Math.random()*filtered.length)];
       if(a.uuid!==b.uuid && Math.abs(a.sas-b.sas)<=diff){
         chosen=[a,b];
         break;
