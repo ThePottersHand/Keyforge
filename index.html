@@ -18,34 +18,46 @@ h1{color:#ffeb3b;text-align:center;margin-bottom:20px;font-size:2.2rem;}
 
 /* COLLAPSIBLE DECK */
 .deck{
-  background:var(--card);padding:16px;border-radius:12px;margin:20px 0;
+  background:var(--card);border-radius:12px;margin:20px 0;
   box-shadow:0 4px 12px rgba(0,0,0,.4);
 }
 .deck-header{
-  display:flex;align-items:center;justify-content:space-between;
-  cursor:pointer;padding:8px 0;font-weight:bold;
+  cursor:pointer;padding:16px 20px;
+  border-bottom:1px solid #333;
 }
 .deck-header h2{
-  margin:0;font-size:1.5rem;display:flex;align-items:center;gap:8px;
+  margin:0 0 4px 0;font-size:1.6rem;font-weight:bold;
+  display:flex;align-items:center;gap:8px;
 }
-.deck-header .errata-tag{color:var(--errata);font-weight:bold;font-size:0.9rem;}
+.deck-header .errata-tag{
+  color:var(--errata);font-weight:bold;font-size:1.1rem;
+}
+.deck-header .deck-info{
+  color:#bbb;font-size:0.95rem;margin:4px 0 0 0;
+}
+.deck-header .links{
+  margin-top:8px;
+}
+.deck-header .links a{
+  color:#90caf9;text-decoration:none;font-size:0.9rem;margin-right:20px;
+}
+.deck-header .links a:hover{text-decoration:underline;}
 .deck-header::after{
-  content:'expand_more';font-family:'Material Icons';font-size:1.6rem;color:#aaa;
+  content:'expand_more';font-family:'Material Icons';font-size:1.8rem;
+  color:#aaa;float:right;margin-top:-38px;
 }
 .deck.collapsed .deck-header::after{content:'expand_less';}
 .deck-content{
-  max-height:2000px;transition:max-height .4s ease;overflow:hidden;
+  max-height:3000px;transition:max-height .5s ease;overflow:hidden;
+  padding:20px;
 }
-.deck.collapsed .deck-content{max-height:0;}
+.deck.collapsed .deck-content{max-height:0;padding:0 20px;}
 
 /* HOUSE GRID */
 .houses-grid{
   display:grid;grid-template-columns:repeat(auto-fit, minmax(280px, 1fr));gap:20px;
-  margin-top:16px;
 }
-.house{
-  text-align:center;
-}
+.house{text-align:center;}
 .house img{width:60px;height:60px;border-radius:50%;background:#333;padding:4px;}
 .house h3{margin:8px 0 4px;font-size:1.3rem;color:#ffeb3b;}
 .house-cards{
@@ -55,11 +67,6 @@ h1{color:#ffeb3b;text-align:center;margin-bottom:20px;font-size:2.2rem;}
   background:#2a2a2a;padding:6px 10px;border-radius:6px;font-size:0.92rem;
 }
 .errata{color:var(--errata);font-weight:bold;}
-
-/* LINKS */
-.links{margin-top:8px;}
-.links a{color:#90caf9;text-decoration:none;margin-right:15px;font-size:0.9rem;}
-.links a:hover{text-decoration:underline;}
 
 /* CONTROLS */
 .mode-toggle{display:flex;gap:15px;margin-bottom:15px;}
@@ -78,7 +85,11 @@ button:hover{background:#b71c1c;}
 .loading{color:#ffeb3b;font-style:italic;text-align:center;margin-bottom:15px;}
 .help{font-size:.85em;color:#aaa;margin-top:4px;}
 .manual-deck-list{max-height:200px;overflow-y:auto;background:#2a2a2a;padding:10px;border-radius:8px;margin-top:10px;}
-@media(max-width:800px){.filter-grid{grid-template-columns:1fr;}}
+@media(max-width:800px){
+  .filter-grid{grid-template-columns:1fr;}
+  .houses-grid{grid-template-columns:1fr;}
+  .deck-header::after{margin-top:-34px;font-size:1.6rem;}
+}
 </style>
 <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
 </head>
@@ -166,17 +177,17 @@ function toggleCollapse(header){
 }
 
 /* --------------------------------------------------------------
-   FULL ERRATA
+   FULL ERRATA – Verified against Master Rulebook 18.2
    -------------------------------------------------------------- */
 const ERRATA = {
   "Arcenomometer": "Enhance ÆmberÆmber.\n(These icons have already been added to cards in your deck.)\nAction: During your opponent’s next turn, each time they play a card, they lose 1Æmber.",
   "Auto-Legionary": "Action: Put Auto-Legionary on a flank of your battleline. While in the battleline, it is considered a creature with 5 power and may be used as if it belonged to the active house.",
   "Bait and Switch": "Play: If your opponent has more Æmber than you, steal 1Æmber. Repeat the preceding effect if your opponent still has more Æmber than you.",
-  "Biomatrix Backup": "This creature gains,”Destroyed: Put this creature into its owner’s archives.”",
+  "Biomatrix Backup": "This creature gains,\"Destroyed: Put this creature into its owner's archives.\"",
   "Cauldron": "Omni: Put the top card of your deck faceup under Cauldron. If there are 3 or more cards under Cauldron, play them one at a time as if they were in your hand.",
-  "Collector Worm": "After Fight: Put the creature Collector Worm fights into your archives. (Both creatures must survive the fight.) If that creature leaves your archives, put it in its owner’s hand instead.",
-  "Corner the Market": "Play: During your opponent\\'s next turn, they cannot play cards, and each time they discard a card from their hand, they may archive that card from their discard pile.",
-  "Curse of Forgetfulness": "Treachery. (This card enters play under your opponent\\'s control.)\nAt the end of your turn, purge the top card in your discard pile.",
+  "Collector Worm": "After Fight: Put the creature Collector Worm fights into your archives. (Both creatures must survive the fight.) If that creature leaves your archives, put it in its owner's hand instead.",
+  "Corner the Market": "Play: During your opponent's next turn, they cannot play cards, and each time they discard a card from their hand, they may archive that card from their discard pile.",
+  "Curse of Forgetfulness": "Treachery. (This card enters play under your opponent's control.)\nAt the end of your turn, purge the top card in your discard pile.",
   "Custom Virus": "Omni: Destroy Custom Virus. You may purge a creature from your hand. If you do, destroy each creature that shares a trait with the purged creature.",
   "Drummernaut": "Play/After Fight/After Reap: Return another friendly Giant creature to your hand.",
   "Duskwitch": "Omega. Elusive.\nYour creatures enter play ready.",
@@ -435,7 +446,7 @@ function hasErrata(deck){
 }
 
 /* --------------------------------------------------------------
-   RENDER DECKS – ONE COLLAPSIBLE SECTION PER DECK
+   RENDER DECKS – FULL HEADER + COLLAPSIBLE CARDS
    -------------------------------------------------------------- */
 function renderDecks(decks){
   const out = document.getElementById('results');
@@ -443,7 +454,7 @@ function renderDecks(decks){
 
   decks.forEach(d => {
     const deckDiv = document.createElement('div');
-    deckDiv.className = 'deck collapsed';  // Start collapsed
+    deckDiv.className = 'deck collapsed';
 
     const hasErr = hasErrata(d);
     const errataTag = hasErr ? '<span class="errata-tag">(Errata)</span>' : '';
@@ -451,13 +462,13 @@ function renderDecks(decks){
     deckDiv.innerHTML = `
       <div class="deck-header" onclick="toggleCollapse(this)">
         <h2>${d.name} ${errataTag}</h2>
-      </div>
-      <div class="deck-content">
-        <p><strong>Set:</strong> ${d.set} | <strong>SAS:</strong> ${d.sas} | <strong>Houses:</strong> ${d.housesStr}</p>
+        <p class="deck-info">Set: ${d.set} | SAS: ${d.sas} | Houses: ${d.housesStr}</p>
         <div class="links">
           <a href="https://decksofkeyforge.com/decks/${d.uuid}" target="_blank">Decks of Keyforge</a>
           <a href="https://www.keyforgegame.com/deck-details/${d.uuid}" target="_blank">Master Vault</a>
         </div>
+      </div>
+      <div class="deck-content">
         <div class="houses-grid">
           ${Object.entries(d.cards).map(([house, cards]) => {
             const hKey = house.toLowerCase();
