@@ -87,26 +87,14 @@ select[multiple]{height:120px;background:#2a2a2a;color:white;}
 
 /* DECK (COLLAPSIBLE) */
 .deck{background:var(--card);border-radius:12px;margin:16px 0;box-shadow:0 4px 12px rgba(0,0,0,.4);}
-.deck-header{
-  cursor:pointer;padding:14px 18px;border-bottom:1px solid #333;
-  display:flex;align-items:flex-start;gap:12px;
-}
-.deck-header .controls{
-  display:flex;gap:8px;align-items:center;flex-shrink:0;
-}
+.deck-header{cursor:pointer;padding:14px 18px;border-bottom:1px solid #333;display:flex;align-items:flex-start;gap:12px;}
 .deck-header .pin-btn{
   background:var(--pinned);color:#000;padding:6px 10px;
   border:none;border-radius:6px;font-size:0.8rem;cursor:pointer;
-  font-weight:bold;opacity:0.7;transition:.2s;
+  font-weight:bold;opacity:0.7;transition:.2s;flex-shrink:0;
 }
 .deck-header .pin-btn.pinned{opacity:1;background:#ffeb3b;}
 .deck-header .pin-btn:hover{opacity:1;}
-.deck-header .errata-toggle{
-  background:var(--errata);color:white;padding:6px 10px;
-  border:none;border-radius:6px;font-size:0.8rem;cursor:pointer;
-  font-weight:bold;
-}
-.deck-header .errata-toggle.active{background:#ff1744;}
 .deck-header .info{flex:1;}
 .deck-header .logos{display:flex;gap:6px;margin-bottom:6px;}
 .deck-header .logos img{width:22px;height:22px;border-radius:50%;}
@@ -120,6 +108,14 @@ select[multiple]{height:120px;background:#2a2a2a;color:white;}
 .deck.collapsed .deck-header::after{content:'expand_less';}
 .deck-content{max-height:3000px;transition:max-height .5s ease;overflow:hidden;padding:18px;}
 .deck.collapsed .deck-content{max-height:0;padding:0 18px;}
+
+/* ERRATA TOGGLE BUTTON - IN CARD LIST */
+.errata-toggle{
+  background:var(--errata);color:white;padding:6px 12px;
+  border:none;border-radius:6px;font-size:0.8rem;cursor:pointer;
+  font-weight:bold;margin-bottom:8px;display:block;
+}
+.errata-toggle.active{background:#ff1744;}
 
 /* HOUSE GRID */
 .houses-grid{display:grid;grid-template-columns:repeat(auto-fit, minmax(260px, 1fr));gap:16px;}
@@ -138,7 +134,7 @@ select[multiple]{height:120px;background:#2a2a2a;color:white;}
   .filter-grid{grid-template-columns:1fr;}
   .deck-review-list{grid-template-columns:1fr;}
   .deck-header{flex-direction:column;gap:8px;align-items:flex-start;}
-  .deck-header .controls{flex-direction:row;gap:8px;}
+  .deck-header .pin-btn{margin-bottom:8px;}
 }
 </style>
 <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
@@ -233,9 +229,10 @@ function openTab(tabName) {
 }
 
 /* --------------------------------------------------------------
-   COLLAPSE DECK
+   COLLAPSE DECK - ONLY ON HEADER
    -------------------------------------------------------------- */
-function toggleCollapse(header){
+function toggleCollapse(event) {
+  const header = event.currentTarget;
   const deck = header.closest('.deck');
   deck.classList.toggle('collapsed');
 }
@@ -255,10 +252,10 @@ function togglePin(uuid) {
 }
 
 /* --------------------------------------------------------------
-   TOGGLE ERRATA FILTER – NO COLLAPSE
+   TOGGLE ERRATA FILTER - IN CARD LIST
    -------------------------------------------------------------- */
 function toggleErrataFilter(uuid) {
-  event.stopPropagation();
+  event.stopPropagation();  // CRITICAL: Prevent collapse
   errataFilterDeck = (errataFilterDeck === uuid) ? null : uuid;
   renderSelectedDecks();
 }
@@ -539,13 +536,8 @@ function renderSelectedDecks() {
     const isErrataView = errataFilterDeck === d.uuid;
 
     deckDiv.innerHTML = `
-      <div class="deck-header" onclick="toggleCollapse(this)">
-        <div class="controls">
-          <button class="pin-btn ${isPinned ? 'pinned' : ''}" onclick="event.stopPropagation(); togglePin('${d.uuid}')">${pinText}</button>
-          ${hasErr ? `<button class="errata-toggle ${isErrataView ? 'active' : ''}" onclick="toggleErrataFilter('${d.uuid}')">
-            ${isErrataView ? 'All Cards' : 'Errata Only'}
-          </button>` : ''}
-        </div>
+      <div class="deck-header" onclick="toggleCollapse(event)">
+        <button class="pin-btn ${isPinned ? 'pinned' : ''}" onclick="event.stopPropagation(); togglePin('${d.uuid}')">${pinText}</button>
         <div class="info">
           <div class="logos">
             ${d.housesStr.split(', ').slice(0,3).map(h => `<img src="icons/${h.toLowerCase().replace(' ', '-')}.png" onerror="this.style.display='none'">`).join('')}
@@ -561,6 +553,9 @@ function renderSelectedDecks() {
         </div>
       </div>
       <div class="deck-content">
+        ${hasErr ? `<button class="errata-toggle ${isErrataView ? 'active' : ''}" onclick="toggleErrataFilter('${d.uuid}')">
+          ${isErrataView ? 'Show All Cards' : 'Show Errata Only'}
+        </button>` : ''}
         <div class="houses-grid">
           ${Object.entries(d.cards).map(([house, cards]) => {
             const filteredCards = isErrataView ? cards.filter(c => ERRATA[c]) : cards;
