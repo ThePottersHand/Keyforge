@@ -41,18 +41,25 @@ button:hover{background:#b71c1c;}
 .filter-col{flex:1;}
 /* DECK */
 .deck{background:var(--card);padding:20px;border-radius:12px;margin:20px 0;box-shadow:0 4px 12px rgba(0,0,0,.4);}
+.deck-header{cursor:pointer;display:flex;justify-content:space-between;align-items:center;padding:10px 0;font-weight:bold;font-size:1.2rem;border-bottom:1px solid #444;}
+.deck-header::after{content:'expand_more';font-family:'Material Icons';font-size:1.4rem;color:#aaa;}
+.deck.collapsed .deck-header::after{content:'expand_less';}
+.deck-content{max-height:1000px;transition:max-height .3s ease;overflow:hidden;}
+.deck.collapsed .deck-content{max-height:0;}
 .house{margin:30px 0 10px;text-align:center;}
 .house img{width:80px;height:80px;border-radius:50%;background:#333;padding:5px;}
 .house h3{display:inline-block;margin-left:12px;vertical-align:middle;font-size:1.4rem;color:#ffeb3b;}
 .house-cards{display:flex;flex-direction:column;gap:8px;margin-top:12px;}
 .card{background:#2a2a2a;padding:8px 10px;border-radius:6px;font-size:0.95rem;}
 .errata{color:#ff5252;font-weight:bold;}
+.errata-badge{background:#ff5252;color:white;font-size:0.75rem;padding:2px 6px;border-radius:4px;margin-left:8px;}
 .links a{color:#90caf9;text-decoration:none;margin-right:15px;font-size:0.9rem;}
 .links a:hover{text-decoration:underline;}
 .loading{color:#ffeb3b;font-style:italic;text-align:center;margin-bottom:15px;}
 .help{font-size:.85em;color:#aaa;margin-top:4px;}
 .manual-deck-list{max-height:200px;overflow-y:auto;background:#2a2a2a;padding:10px;border-radius:8px;margin-top:10px;}
-@media(max-width:800px){.filter-grid{grid-template-columns:1fr;}}
+.btn-row{display:flex;gap:10px;justify-content:center;margin-top:20px;flex-wrap:wrap;}
+@media(max-width:800px){.filter-grid{grid-template-columns:1fr;}.btn-row{flex-direction:column;}}
 </style>
 <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
 </head>
@@ -71,7 +78,7 @@ button:hover{background:#b71c1c;}
 
     <!-- RANDOM MODE (COLLAPSIBLE) -->
     <div id="randomMode">
-      <div class="collapsible-header" onclick="toggleCollapse(this)">
+      <div class="collapsible-header collapsed" onclick="toggleCollapse(this)">
         Filters
       </div>
       <div class="collapsible-content">
@@ -112,11 +119,14 @@ button:hover{background:#b71c1c;}
             <select id="houses" multiple></select>
           </div>
         </div>
-
-        <button id="selectBtn" disabled style="margin-top:20px;font-size:18px;padding:14px;" onclick="pickDecks()">
-          Select Random Deck(s)
-        </button>
       </div>
+    </div>
+
+    <!-- SELECT BUTTON - MOVED BELOW COLLAPSIBLE -->
+    <div class="btn-row">
+      <button id="selectBtn" disabled style="font-size:18px;padding:14px;flex:1;" onclick="pickDecks()">
+        Select Random Deck(s)
+      </button>
     </div>
 
     <!-- MANUAL MODE -->
@@ -141,16 +151,13 @@ function toggleCollapse(header){
 }
 
 /* --------------------------------------------------------------
-   FULL ERRATA
-   -------------------------------------------------------------- */
-/* --------------------------------------------------------------
    FULL ERRATA – verified against Master Rulebook 18.2
    -------------------------------------------------------------- */
 const ERRATA = {
   "Arcenomometer":
     "Enhance ÆmberÆmber.\n" +
     "(These icons have already been added to cards in your deck.)\n" +
-    "Action: During your opponent’s next turn, each time they play a card, they lose 1Æmber.",
+    "Action: During your opponent's next turn, each time they play a card, they lose 1Æmber.",
 
   "Auto-Legionary":
     "Action: Put Auto-Legionary on a flank of your battleline. While in the battleline, it is considered a creature with 5 power and may be used as if it belonged to the active house.",
@@ -159,19 +166,19 @@ const ERRATA = {
     "Play: If your opponent has more Æmber than you, steal 1Æmber. Repeat the preceding effect if your opponent still has more Æmber than you.",
 
   "Biomatrix Backup":
-    "This creature gains, “Destroyed: Put this creature into its owner’s archives.”",
+    "This creature gains, \"Destroyed: Put this creature into its owner's archives.\"",
 
   "Cauldron":
     "Omni: Put the top card of your deck faceup under Cauldron. If there are 3 or more cards under Cauldron, play them one at a time as if they were in your hand.",
 
   "Collector Worm":
-    "After Fight: Put the creature Collector Worm fights into your archives. (Both creatures must survive the fight.) If that creature leaves your archives, put it in its owner’s hand instead.",
+    "After Fight: Put the creature Collector Worm fights into your archives. (Both creatures must survive the fight.) If that creature leaves your archives, put it in its owner's hand instead.",
 
   "Corner the Market":
-    "Play: During your opponent’s next turn, they cannot play cards, and each time they discard a card from their hand, they may archive that card from their discard pile.",
+    "Play: During your opponent's next turn, they cannot play cards, and each time they discard a card from their hand, they may archive that card from their discard pile.",
 
   "Curse of Forgetfulness":
-    "Treachery. (This card enters play under your opponent’s control.)\n" +
+    "Treachery. (This card enters play under your opponent's control.)\n" +
     "At the end of your turn, purge the top card in your discard pile.",
 
   "Custom Virus":
@@ -191,7 +198,7 @@ const ERRATA = {
     "Play: Stun and exhaust this creature.",
 
   "Glimmerspore":
-    "Play: Put an artifact from play into your archives. If you are not the owner of that card and it leaves your archives, put it into its owner’s hand instead.",
+    "Play: Put an artifact from play into your archives. If you are not the owner of that card and it leaves your archives, put it into its owner's hand instead.",
 
   "Incubation Chamber":
     "Omni: You may reveal a Mars creature from your hand. If you do, archive it.",
@@ -217,21 +224,21 @@ const ERRATA = {
     "Scrap: You may play 1 card that is not of the active house during your turn.",
 
   "Offering to Kiligog":
-    "The second “Omni:” ability should read:\n" +
+    "The second \"Omni:\" ability should read:\n" +
     "Omni: Make each card under Offering to Kiligog a token creature as if the card was on top of your deck.",
 
   "Pain Reaction":
-    "Play: Deal 2 damage to an enemy creature. If this damage destroys that creature, deal 2 damage to each of that creature’s neighbors after it leaves play.",
+    "Play: Deal 2 damage to an enemy creature. If this damage destroys that creature, deal 2 damage to each of that creature's neighbors after it leaves play.",
 
   "Ragatha":
-    "Treachery.\nAfter an enemy creature reaps, deal 3 damage to each of Ragatha’s neighbors.",
+    "Treachery.\nAfter an enemy creature reaps, deal 3 damage to each of Ragatha's neighbors.",
 
   "Sample 42-C":
-    "Action: Move 1Æmber from your opponent’s pool to Sample 42-C. If there are 4Æmber or more on Sample 42-C, forge a key at no cost and purge Sample 42-C.\n" +
+    "Action: Move 1Æmber from your opponent's pool to Sample 42-C. If there are 4Æmber or more on Sample 42-C, forge a key at no cost and purge Sample 42-C.\n" +
     "Fate: The most powerful enemy creature captures half of your Æmber (rounding down).",
 
   "Scoop Up":
-    "Play: Put a friendly non-Mars creature and an enemy non-Mars creature into your archives. If either card leaves your archives and you are not the owner of it, put it into its owner’s hand instead.",
+    "Play: Put a friendly non-Mars creature and an enemy non-Mars creature into your archives. If either card leaves your archives and you are not the owner of it, put it into its owner's hand instead.",
 
   "Shrink-ray Technician":
     "After Reap: Choose an enemy creature. It gets –2 power until the end of the turn.\n" +
@@ -244,7 +251,7 @@ const ERRATA = {
     "Play: Deal 1 damage to each creature. Deal 4 damage to each creature instead if your opponent forged a key on their previous turn.",
 
   "Yipyax Abductor":
-    "Play/After Fight: Put an upgrade from play into your archives. If you are not the owner of that card and it leaves your archives, put it into its owner’s hand instead.",
+    "Play/After Fight: Put an upgrade from play into your archives. If you are not the owner of that card and it leaves your archives, put it into its owner's hand instead.",
 
   "Yzphyz Knowdrone":
     "Play: Archive a card. You may purge an archived card. If you do, stun a creature."
@@ -429,6 +436,16 @@ document.getElementById('numDecks').addEventListener('change',()=>{
 });
 
 /* --------------------------------------------------------------
+   CHECK IF DECK HAS ERRATA
+   -------------------------------------------------------------- */
+function deckHasErrata(deck){
+  for(const house in deck.cards){
+    if(deck.cards[house].some(card => ERRATA[card])) return true;
+  }
+  return false;
+}
+
+/* --------------------------------------------------------------
    RANDOM SELECTION
    -------------------------------------------------------------- */
 function pickDecks(){
@@ -484,60 +501,60 @@ function showManualDeck(){
 }
 
 /* --------------------------------------------------------------
-   RENDER DECKS – ONE COLUMN PER HOUSE
+   RENDER DECKS – COLLAPSIBLE + ERRATA BADGE
    -------------------------------------------------------------- */
 function renderDecks(decks){
   const out=document.getElementById('results');
   out.innerHTML='';
 
   decks.forEach((d,i)=>{
-    const div=document.createElement('div');
-    div.className='deck';
-    div.innerHTML=`
-      <h2>${d.name}</h2>
-      <p><strong>Set:</strong> ${d.set} | <strong>SAS:</strong> ${d.sas} | <strong>Houses:</strong> ${d.housesStr}</p>
-      <div class="links">
-        <a href="https://decksofkeyforge.com/decks/${d.uuid}" target="_blank">Decks of Keyforge</a>
-        <a href="https://www.keyforgegame.com/deck-details/${d.uuid}" target="_blank">Master Vault</a>
+    const hasErrata = deckHasErrata(d);
+    const errataBadge = hasErrata ? `<span class="errata-badge">(Errata)</span>` : '';
+
+    const deckDiv = document.createElement('div');
+    deckDiv.className = 'deck collapsed';
+    deckDiv.innerHTML = `
+      <div class="deck-header" onclick="toggleCollapse(this)">
+        <div>
+          <strong>${d.name}</strong>${errataBadge}
+        </div>
+        <div style="font-size:0.9rem;color:#aaa;">
+          Set: ${d.set} | SAS: ${d.sas} | Houses: ${d.housesStr}
+        </div>
+      </div>
+      <div class="deck-content">
+        <div class="links">
+          <a href="https://decksofkeyforge.com/decks/${d.uuid}" target="_blank">Decks of Keyforge</a>
+          <a href="https://www.keyforgegame.com/deck-details/${d.uuid}" target="_blank">Master Vault</a>
+        </div>
+        <div style="display:flex;gap:30px;flex-wrap:wrap;justify-content:center;margin-top:20px;">
+          ${Object.entries(d.cards).map(([house,cards])=>{
+            const hKey = house.toLowerCase();
+            const iconName = HOUSE_ICON_MAP[hKey] || 'default';
+            return `
+              <div style="flex:1 1 300px;min-width:250px;">
+                <div class="house">
+                  <img src="icons/${iconName}.png" alt="${house}" onerror="this.src='icons/default.png'">
+                  <h3>${house}</h3>
+                </div>
+                <div class="house-cards">
+                  ${cards.length===0 ? '<div class="card">(no cards)</div>' : 
+                    cards.map(c=>`
+                      <div class="card">
+                        ${ERRATA[c] ? `<span class="errata">${c}</span><br><small>${ERRATA[c].replace(/\n/g,'<', 'g')}</small>` : c}
+                      </div>
+                    `).join('')
+                  }
+                </div>
+              </div>
+            `;
+          }).join('')}
+        </div>
       </div>
     `;
-
-    const houseContainer = document.createElement('div');
-    houseContainer.style.display = 'flex';
-    houseContainer.style.gap = '30px';
-    houseContainer.style.flexWrap = 'wrap';
-    houseContainer.style.justifyContent = 'center';
-
-    Object.entries(d.cards).forEach(([house,cards])=>{
-      const hKey = house.toLowerCase();
-      const iconName = HOUSE_ICON_MAP[hKey] || 'default';
-
-      const houseDiv = document.createElement('div');
-      houseDiv.style.flex = '1 1 300px';
-      houseDiv.style.minWidth = '250px';
-      houseDiv.innerHTML = `
-        <div class="house">
-          <img src="icons/${iconName}.png" alt="${house}" onerror="this.src='icons/default.png'">
-          <h3>${house}</h3>
-        </div>
-        <div class="house-cards">
-          ${cards.length===0 ? '<div class="card">(no cards)</div>' : 
-            cards.map(c=>`
-              <div class="card">
-                ${ERRATA[c] ? `<span class="errata">${c}</span><br><small>${ERRATA[c].replace(/\n/g,'<br>')}</small>` : c}
-              </div>
-            `).join('')
-          }
-        </div>
-      `;
-      houseContainer.appendChild(houseDiv);
-    });
-
-    div.appendChild(houseContainer);
-    out.appendChild(div);
+    out.appendChild(deckDiv);
   });
 }
 </script>
 </body>
 </html>
-
