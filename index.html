@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>RKDS</title>
+<title>KeforgeRandom</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <link rel="icon" href="data:,">
 <style>
@@ -14,40 +14,26 @@
 *{margin:0;padding:0;box-sizing:border-box;}
 body{font-family:Arial,sans-serif;background:var(--bg);color:var(--text);padding:20px;line-height:1.6;}
 .container{max-width:1100px;margin:auto;}
-h1{color:#ffeb3b;text-align:center;margin-bottom:16px;font-size:2.1rem;}
+h1{color:#ffeb3b;text-align:center;margin-bottom:16px;font-size:2rem;}
 
-/* ACTION BAR - Compact on Mobile */
+/* ACTION BAR - MINIMIZED ON MOBILE */
 .action-bar{
   background:var(--card);padding:12px 16px;border-radius:12px;
   box-shadow:0 4px 12px rgba(0,0,0,.4);margin-bottom:16px;
-  display:flex;gap:10px;align-items:center;flex-wrap:wrap;
-  font-size:0.95rem;
+  display:flex;gap:12px;align-items:center;flex-wrap:wrap;
 }
-.action-bar label{font-weight:bold;}
-.action-bar select{
-  padding:8px;border-radius:8px;font-size:14px;flex:1 1 100px;
-}
+.action-bar label{font-weight:bold;font-size:0.95rem;}
+.action-bar select{padding:8px;border-radius:8px;font-size:15px;flex:1 1 100px;}
 .action-bar button{
-  background:var(--primary);color:white;padding:10px 16px;
-  border:none;border-radius:8px;font-weight:bold;cursor:pointer;
-  font-size:14px;flex:1 1 140px;transition:.3s;
+  background:var(--primary);color:white;padding:10px 18px;
+  border:none;border-radius:8px;font-weight:bold;cursor:pointer;transition:.3s;
+  font-size:15px;flex:1 1 140px;
 }
 .action-bar button:hover{background:#b71c1c;}
 .action-bar button:disabled{background:#666;cursor:not-allowed;}
-
-/* SELECTED DECKS PREVIEW */
-.selected-decks{
-  background:var(--card);padding:12px 16px;border-radius:12px;
-  box-shadow:0 2px 8px rgba(0,0,0,.3);margin-bottom:16px;
-  display:none;
-}
-.selected-decks.show{display:block;}
-.selected-decks h3{font-size:1.1rem;margin:0 0 8px;}
-.selected-decks .deck-names{
-  display:flex;flex-wrap:wrap;gap:8px;font-size:0.9rem;
-}
-.selected-decks .deck-name{
-  background:#2a2a2a;padding:4px 10px;border-radius:6px;
+@media(max-width:600px){
+  .action-bar{flex-direction:column;gap:10px;}
+  .action-bar select,.action-bar button{flex:1 1 100%;}
 }
 
 /* TABS */
@@ -68,22 +54,25 @@ h1{color:#ffeb3b;text-align:center;margin-bottom:16px;font-size:2.1rem;}
 
 /* FILTER SECTION */
 .filter-section{
-  background:var(--card);border-radius:12px;margin-bottom:20px;
+  background:var(--card);border-radius:12px;margin-bottom:16px;
   box-shadow:0 4px 12px rgba(0,0,0,.4);padding:16px;
 }
 .filter-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
 .filter-col{flex:1;}
 label{display:block;margin:10px 0 5px;font-weight:bold;font-size:0.95rem;}
-select,input{width:100%;padding:8px;margin:4px 0;border:none;border-radius:8px;font-size:14px;}
+select,input{width:100%;padding:8px;margin:4px 0;border:none;border-radius:8px;font-size:15px;}
 input[type="number"]{width:100%;}
-select[multiple]{height:110px;background:#2a2a2a;color:white;}
-.btn-small{display:inline-block;width:auto;padding:5px 10px;margin:3px 1px;font-size:13px;border-radius:6px;}
+select[multiple]{height:120px;background:#2a2a2a;color:white;}
+.btn-small{display:inline-block;width:auto;padding:5px 10px;margin:3px 2px;font-size:13px;border-radius:8px;}
 .btn-success{background:var(--success);color:white;}
 .btn-success:hover{background:#388e3c;}
 
+/* FILTERED COUNT */
+.filter-count{color:#ffeb3b;font-style:italic;text-align:center;margin:8px 0;font-size:0.9rem;}
+
 /* DECK REVIEW LIST */
 .deck-review-list{
-  display:grid;grid-template-columns:repeat(auto-fill, minmax(280px, 1fr));gap:14px;
+  display:grid;grid-template-columns:repeat(auto-fill, minmax(280px, 1fr));gap:12px;
 }
 .deck-item{
   background:var(--card);padding:12px;border-radius:10px;
@@ -91,49 +80,44 @@ select[multiple]{height:110px;background:#2a2a2a;color:white;}
   transition:.2s;
 }
 .deck-item:hover{transform:translateY(-2px);box-shadow:0 4px 12px rgba(0,0,0,.4);}
-.deck-item h3{font-size:1.05rem;margin:0 0 5px;}
+.deck-item h3{font-size:1.05rem;margin:0 0 4px;}
 .deck-item p{font-size:0.85rem;color:#bbb;margin:2px 0;}
 .deck-item .errata-tag{color:var(--errata);font-weight:bold;}
 
 /* DECK (COLLAPSIBLE) */
-.deck{background:var(--card);border-radius:12px;margin:20px 0;box-shadow:0 4px 12px rgba(0,0,0,.4);}
+.deck{background:var(--card);border-radius:12px;margin:16px 0;box-shadow:0 4px 12px rgba(0,0,0,.4);}
 .deck-header{cursor:pointer;padding:14px 18px;border-bottom:1px solid #333;}
-.deck-header h2{margin:0 0 4px 0;font-size:1.45rem;font-weight:bold;display:flex;align-items:center;gap:8px;}
-.deck-header .errata-tag{color:var(--errata);font-weight:bold;font-size:1.05rem;}
-.deck-header .deck-info{color:#bbb;font-size:0.9rem;margin:4px 0 0 0;}
+.deck-header h2{margin:0 0 3px 0;font-size:1.4rem;font-weight:bold;display:flex;align-items:center;gap:6px;}
+.deck-header .errata-tag{color:var(--errata);font-weight:bold;font-size:1rem;}
+.deck-header .deck-info{color:#bbb;font-size:0.9rem;margin:3px 0 0 0;}
 .deck-header .links{margin-top:6px;}
 .deck-header .links a{color:#90caf9;text-decoration:none;font-size:0.85rem;margin-right:16px;}
 .deck-header .links a:hover{text-decoration:underline;}
-.deck-header::after{content:'expand_more';font-family:'Material Icons';font-size:1.7rem;color:#aaa;float:right;margin-top:-34px;}
+.deck-header::after{content:'expand_more';font-family:'Material Icons';font-size:1.6rem;color:#aaa;float:right;margin-top:-34px;}
 .deck.collapsed .deck-header::after{content:'expand_less';}
 .deck-content{max-height:3000px;transition:max-height .5s ease;overflow:hidden;padding:18px;}
 .deck.collapsed .deck-content{max-height:0;padding:0 18px;}
 
 /* HOUSE GRID */
-.houses-grid{display:grid;grid-template-columns:repeat(auto-fit, minmax(260px, 1fr));gap:18px;}
+.houses-grid{display:grid;grid-template-columns:repeat(auto-fit, minmax(260px, 1fr));gap:16px;}
 .house{text-align:center;}
-.house img{width:56px;height:56px;border-radius:50%;background:#333;padding:4px;}
-.house h3{margin:8px 0 4px;font-size:1.25rem;color:#ffeb3b;}
+.house img{width:56px;height:56px;border-radius:50%;background:#333;padding:3px;}
+.house h3{margin:6px 0 3px;font-size:1.2rem;color:#ffeb3b;}
 .house-cards{display:flex;flex-direction:column;gap:5px;text-align:left;}
-.card{background:#2a2a2a;padding:5px 9px;border-radius:6px;font-size:0.88rem;}
+.card{background:#2a2a2a;padding:5px 8px;border-radius:6px;font-size:0.88rem;}
 .errata{color:var(--errata);font-weight:bold;}
 
 /* MISC */
-.loading{color:#ffeb3b;font-style:italic;text-align:center;margin:12px 0;font-size:0.95rem;}
 @media(max-width:600px){
-  .action-bar{flex-direction:column;padding:10px;font-size:0.9rem;}
-  .action-bar select,.action-bar button{flex:1 1 100%;font-size:13px;padding:8px;}
   .filter-grid{grid-template-columns:1fr;}
   .deck-review-list{grid-template-columns:1fr;}
-  .houses-grid{grid-template-columns:1fr;}
-  .deck-header::after{margin-top:-30px;font-size:1.5rem;}
 }
 </style>
 <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
 </head>
 <body>
 <div class="container">
-  <h1>RKDS</h1>
+  <h1>KeforgeRandom</h1>
 
   <!-- ACTION BAR -->
   <div class="action-bar">
@@ -145,11 +129,8 @@ select[multiple]{height:110px;background:#2a2a2a;color:white;}
     <button id="selectBtn" disabled onclick="pickDecks()">Select Random Deck(s)</button>
   </div>
 
-  <!-- SELECTED DECKS PREVIEW -->
-  <div id="selectedDecks" class="selected-decks">
-    <h3>Selected:</h3>
-    <div class="deck-names" id="selectedDeckNames"></div>
-  </div>
+  <!-- SELECTED DECKS (APPEAR HERE) -->
+  <div id="results"></div>
 
   <!-- TABS -->
   <div class="tabs">
@@ -163,11 +144,11 @@ select[multiple]{height:110px;background:#2a2a2a;color:white;}
       <label>SAS Range:</label>
       <div style="display:flex;gap:8px;align-items:center;">
         <input type="number" id="sasMinInput" placeholder="Min" style="flex:1">
-        <span style="width:20px;text-align:center;">–</span>
+        <span style="width:16px;text-align:center;">–</span>
         <input type="number" id="sasMaxInput" placeholder="Max" style="flex:1">
       </div>
 
-      <div id="diffControl" style="display:none;margin-top:10px;">
+      <div id="diffControl" style="display:none;margin-top:8px;">
         <label>Max SAS Difference:</label>
         <input type="number" id="maxDiffInput" min="0" max="30" value="5">
       </div>
@@ -175,7 +156,7 @@ select[multiple]{height:110px;background:#2a2a2a;color:white;}
       <div class="filter-grid">
         <div class="filter-col">
           <label>Sets:</label>
-          <div style="display:flex;gap:5px;">
+          <div style="display:flex;gap:4px;">
             <button class="btn-small btn-success" onclick="selectAll('sets')">All</button>
             <button class="btn-small" onclick="clearAll('sets')">Clear</button>
           </div>
@@ -183,7 +164,7 @@ select[multiple]{height:110px;background:#2a2a2a;color:white;}
         </div>
         <div class="filter-col">
           <label>Houses:</label>
-          <div style="display:flex;gap:5px;">
+          <div style="display:flex;gap:4px;">
             <button class="btn-small btn-success" onclick="selectAll('houses')">All</button>
             <button class="btn-small" onclick="clearAll('houses')">Clear</button>
           </div>
@@ -194,11 +175,9 @@ select[multiple]{height:110px;background:#2a2a2a;color:white;}
   </div>
 
   <div id="review" class="tab-content">
-    <p class="loading" id="filteredCount">Loading decks from CSV…</p>
+    <p class="filter-count" id="filterCount">Loading decks from CSV…</p>
     <div id="deckReviewList" class="deck-review-list"></div>
   </div>
-
-  <div id="results"></div>
 </div>
 
 <script>
@@ -210,8 +189,7 @@ function openTab(tabName) {
   document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
   document.querySelector(`.tab[onclick="openTab('${tabName}')"]`).classList.add('active');
   document.getElementById(tabName).classList.add('active');
-  
-  if (tabName === 'review') populateDeckReview();
+  if(tabName === 'review') populateDeckReview();
 }
 
 /* --------------------------------------------------------------
@@ -273,9 +251,8 @@ const HOUSE_ICON_MAP = {
 /* --------------------------------------------------------------
    GLOBAL DATA
    -------------------------------------------------------------- */
-let data = [], sets = new Set(), houses = new Set();
+let data = [], filteredData = [], sets = new Set(), houses = new Set();
 let minSAS = Infinity, maxSAS = -Infinity;
-let filteredDecks = [];
 
 /* --------------------------------------------------------------
    CSV PARSER
@@ -359,11 +336,9 @@ fetch('decks_data_fixed.csv')
   })
   .catch(err=>{
     console.error(err);
-    document.getElementById('filteredCount').innerHTML = `
+    document.getElementById('filterCount').innerHTML = `
       <span style="color:#ff5252">
-        Failed to load <b>decks_data_fixed.csv</b>.<br>
-        Run via a local server:<br>
-        <code>python -m http.server 8000</code>
+        Failed to load <b>decks_data_fixed.csv</b>.
       </span>`;
   });
 
@@ -398,24 +373,24 @@ function applyFilters(){
   const selSets = Array.from(document.getElementById('sets').selectedOptions).map(o=>o.value);
   const selHouses = Array.from(document.getElementById('houses').selectedOptions).map(o=>o.value.toLowerCase());
 
-  filteredDecks = data.filter(d =>
-    d.sas >= min && d.sas <= max &&
-    (selSets.length === 0 || selSets.includes(d.set)) &&
-    (selHouses.length === 0 || selHouses.every(h => d.houseList.includes(h)))
+  filteredData = data.filter(d=>
+    d.sas>=min && d.sas<=max &&
+    (selSets.length===0 || selSets.includes(d.set)) &&
+    (selHouses.length===0 || selHouses.every(h=>d.houseList.includes(h)))
   );
 
-  document.getElementById('filteredCount').textContent = `Showing ${filteredDecks.length} filtered deck(s)`;
+  document.getElementById('filterCount').textContent = `${filteredData.length} decks match filters`;
   populateDeckReview();
 }
 
 /* --------------------------------------------------------------
-   DECK REVIEW – FILTERED DECKS ONLY
+   DECK REVIEW – SHOW FILTERED DECKS
    -------------------------------------------------------------- */
 function populateDeckReview(){
   const container = document.getElementById('deckReviewList');
   container.innerHTML = '';
 
-  const sorted = [...filteredDecks].sort((a,b) => {
+  const sorted = [...filteredData].sort((a,b) => {
     if(a.set !== b.set) return a.set.localeCompare(b.set);
     return a.name.localeCompare(b.name);
   });
@@ -445,11 +420,11 @@ document.getElementById('numDecks').addEventListener('change',()=>{
     document.getElementById('numDecks').value==='2' ? 'block':'none';
 });
 
-// Re-apply filters on input change
-['sasMinInput','sasMaxInput','sets','houses'].forEach(id => {
-  document.getElementById(id).addEventListener('input', applyFilters);
-  document.getElementById(id).addEventListener('change', applyFilters);
-});
+/* Attach filter listeners */
+document.getElementById('sasMinInput').addEventListener('input', applyFilters);
+document.getElementById('sasMaxInput').addEventListener('input', applyFilters);
+document.getElementById('sets').addEventListener('change', applyFilters);
+document.getElementById('houses').addEventListener('change', applyFilters);
 
 /* --------------------------------------------------------------
    RANDOM SELECTION
@@ -458,19 +433,19 @@ function pickDecks(){
   const num = +document.getElementById('numDecks').value;
   const diff = num===2 ? +document.getElementById('maxDiffInput').value : 0;
 
-  if(filteredDecks.length < num){
-    document.getElementById('results').innerHTML = `<p style="color:#ff5252;text-align:center;">Not enough decks (found ${filteredDecks.length}, need ${num})</p>`;
+  if(filteredData.length < num){
+    document.getElementById('results').innerHTML = `<p style="color:#ff5252;text-align:center;">Not enough decks (found ${filteredData.length}, need ${num})</p>`;
     return;
   }
 
   let chosen = [];
   if(num===1){
-    chosen = [filteredDecks[Math.floor(Math.random()*filteredDecks.length)]];
+    chosen = [filteredData[Math.floor(Math.random()*filteredData.length)]];
   }else{
     let tries=0;
     while(tries<2000){
-      const a=filteredDecks[Math.floor(Math.random()*filteredDecks.length)];
-      const b=filteredDecks[Math.floor(Math.random()*filteredDecks.length)];
+      const a=filteredData[Math.floor(Math.random()*filteredData.length)];
+      const b=filteredData[Math.floor(Math.random()*filteredData.length)];
       if(a.uuid!==b.uuid && Math.abs(a.sas-b.sas)<=diff){
         chosen=[a,b];
         break;
@@ -482,12 +457,6 @@ function pickDecks(){
       return;
     }
   }
-
-  // Show selected decks
-  const names = chosen.map(d => d.name).join(' vs ');
-  document.getElementById('selectedDeckNames').textContent = names;
-  document.getElementById('selectedDecks').classList.add('show');
-
   renderDecks(chosen);
 }
 
