@@ -9,14 +9,14 @@
 :root{
   --bg:#121212; --card:#1e1e1e; --text:#e0e0e0;
   --primary:#d32f2f; --success:#4caf50; --errata:#ff5252;
+  --tab-bg:#2a2a2a; --tab-active:#3a3a3a;
 }
 *{margin:0;padding:0;box-sizing:border-box;}
 body{font-family:Arial,sans-serif;background:var(--bg);color:var(--text);padding:20px;line-height:1.6;}
 .container{max-width:1100px;margin:auto;}
 h1{color:#ffeb3b;text-align:center;margin-bottom:20px;font-size:2.2rem;}
-.controls{background:var(--card);padding:20px;border-radius:12px;margin-bottom:20px;box-shadow:0 4px 12px rgba(0,0,0,.4);}
 
-/* FIXED ACTION BAR */
+/* ACTION BAR */
 .action-bar{
   background:var(--card);padding:16px;border-radius:12px;
   box-shadow:0 4px 12px rgba(0,0,0,.4);margin-bottom:20px;
@@ -32,24 +32,27 @@ h1{color:#ffeb3b;text-align:center;margin-bottom:20px;font-size:2.2rem;}
 .action-bar button:hover{background:#b71c1c;}
 .action-bar button:disabled{background:#666;cursor:not-allowed;}
 
-/* COLLAPSIBLE FILTERS */
+/* TABS */
+.tabs{
+  display:flex;gap:2px;margin-bottom:20px;
+  border-bottom:1px solid #444;
+}
+.tab{
+  background:var(--tab-bg);padding:12px 20px;cursor:pointer;
+  border-radius:8px 8px 0 0;font-weight:bold;
+  transition:.3s;
+}
+.tab.active{background:var(--tab-active);border-bottom:2px solid var(--primary);}
+
+/* TAB CONTENT */
+.tab-content{display:none;}
+.tab-content.active{display:block;}
+
+/* FILTER SECTION */
 .filter-section{
   background:var(--card);border-radius:12px;margin-bottom:20px;
-  box-shadow:0 4px 12px rgba(0,0,0,.4);
+  box-shadow:0 4px 12px rgba(0,0,0,.4);padding:20px;
 }
-.filter-header{
-  display:flex;justify-content:space-between;align-items:center;
-  cursor:pointer;padding:14px 20px;font-weight:bold;font-size:1.1rem;
-}
-.filter-header::after{content:'expand_more';font-family:'Material Icons';font-size:1.4rem;color:#aaa;}
-.filter-section.collapsed .filter-header::after{content:'expand_less';}
-.filter-content{
-  max-height:1000px;transition:max-height .4s ease;overflow:hidden;
-  padding:0 20px 20px;
-}
-.filter-section.collapsed .filter-content{max-height:0;padding:0 20px;}
-
-/* FILTER GRID */
 .filter-grid{display:grid;grid-template-columns:1fr 1fr;gap:15px;}
 .filter-col{flex:1;}
 label{display:block;margin:12px 0 6px;font-weight:bold;font-size:1rem;}
@@ -60,7 +63,21 @@ select[multiple]{height:130px;background:#2a2a2a;color:white;}
 .btn-success{background:var(--success);color:white;}
 .btn-success:hover{background:#388e3c;}
 
-/* DECK */
+/* DECK REVIEW LIST */
+.deck-review-list{
+  display:grid;grid-template-columns:repeat(auto-fill, minmax(300px, 1fr));gap:16px;
+}
+.deck-item{
+  background:var(--card);padding:14px;border-radius:10px;
+  box-shadow:0 2px 8px rgba(0,0,0,.3);cursor:pointer;
+  transition:.2s;
+}
+.deck-item:hover{transform:translateY(-2px);box-shadow:0 4px 12px rgba(0,0,0,.4);}
+.deck-item h3{font-size:1.1rem;margin:0 0 6px;}
+.deck-item p{font-size:0.9rem;color:#bbb;margin:2px 0;}
+.deck-item .errata-tag{color:var(--errata);font-weight:bold;}
+
+/* DECK (COLLAPSIBLE) */
 .deck{background:var(--card);border-radius:12px;margin:20px 0;box-shadow:0 4px 12px rgba(0,0,0,.4);}
 .deck-header{cursor:pointer;padding:16px 20px;border-bottom:1px solid #333;}
 .deck-header h2{margin:0 0 4px 0;font-size:1.6rem;font-weight:bold;display:flex;align-items:center;gap:8px;}
@@ -85,12 +102,11 @@ select[multiple]{height:130px;background:#2a2a2a;color:white;}
 
 /* MISC */
 .loading{color:#ffeb3b;font-style:italic;text-align:center;margin-bottom:15px;}
-.help{font-size:.85em;color:#aaa;margin-top:4px;}
-.manual-deck-list{max-height:200px;overflow-y:auto;background:#2a2a2a;padding:10px;border-radius:8px;margin-top:10px;}
 @media(max-width:800px){
   .filter-grid{grid-template-columns:1fr;}
   .action-bar{flex-direction:column;}
   .action-bar select,.action-bar button{flex:1 1 100%;}
+  .deck-review-list{grid-template-columns:1fr;}
 }
 </style>
 <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
@@ -99,7 +115,7 @@ select[multiple]{height:130px;background:#2a2a2a;color:white;}
 <div class="container">
   <h1>Keyforge Deck Selector</h1>
 
-  <!-- ACTION BAR: Always visible -->
+  <!-- ACTION BAR -->
   <div class="action-bar">
     <label>Number of Decks:</label>
     <select id="numDecks">
@@ -109,63 +125,51 @@ select[multiple]{height:130px;background:#2a2a2a;color:white;}
     <button id="selectBtn" disabled onclick="pickDecks()">Select Random Deck(s)</button>
   </div>
 
-  <div class="controls">
-    <p class="loading" id="loading">Loading decks from CSV…</p>
+  <!-- TABS -->
+  <div class="tabs">
+    <div class="tab active" onclick="openTab('random')">Randomizer</div>
+    <div class="tab" onclick="openTab('review')">Deck Review</div>
+  </div>
 
-    <!-- MODE TOGGLE -->
-    <div class="mode-toggle">
-      <label><input type="radio" name="mode" value="random" checked> Random</label>
-      <label><input type="radio" name="mode" value="manual"> Manual</label>
-    </div>
+  <!-- TAB CONTENT -->
+  <div id="random" class="tab-content active">
+    <div class="filter-section">
+      <label>SAS Range:</label>
+      <div style="display:flex;gap:10px;align-items:center;">
+        <input type="number" id="sasMinInput" placeholder="Min" style="flex:1">
+        <span style="width:20px;text-align:center;">–</span>
+        <input type="number" id="sasMaxInput" placeholder="Max" style="flex:1">
+      </div>
 
-    <!-- COLLAPSIBLE FILTERS -->
-    <div id="randomMode">
-      <div class="filter-section collapsed">
-        <div class="filter-header" onclick="toggleFilter(this)">
-          Filters
+      <div id="diffControl" style="display:none;margin-top:10px;">
+        <label>Max SAS Difference:</label>
+        <input type=" پیدا number" id="maxDiffInput" min="0" max="30" value="5">
+      </div>
+
+      <div class="filter-grid">
+        <div class="filter-col">
+          <label>Sets:</label>
+          <div style="display:flex;gap:5px;">
+            <button class="btn-small btn-success" onclick="selectAll('sets')">All</button>
+            <button class="btn-small" onclick="clearAll('sets')">Clear</button>
+          </div>
+          <select id="sets" multiple></select>
         </div>
-        <div class="filter-content">
-          <label>SAS Range:</label>
-          <div style="display:flex;gap:10px;align-items:center;">
-            <input type="number" id="sasMinInput" placeholder="Min" style="flex:1">
-            <span style="width:20px;text-align:center;">–</span>
-            <input type="number" id="sasMaxInput" placeholder="Max" style="flex:1">
+        <div class="filter-col">
+          <label>Houses:</label>
+          <div style="display:flex;gap:5px;">
+            <button class="btn-small btn-success" onclick="selectAll('houses')">All</button>
+            <button class="btn-small" onclick="clearAll('houses')">Clear</button>
           </div>
-          <div class="help">Leave blank for full range</div>
-
-          <div id="diffControl" style="display:none;margin-top:10px;">
-            <label>Max SAS Difference:</label>
-            <input type="number" id="maxDiffInput" min="0" max="30" value="5">
-          </div>
-
-          <div class="filter-grid">
-            <div class="filter-col">
-              <label>Sets:</label>
-              <div style="display:flex;gap:5px;">
-                <button class="btn-small btn-success" onclick="selectAll('sets')">All</button>
-                <button class="btn-small" onclick="clearAll('sets')">Clear</button>
-              </div>
-              <select id="sets" multiple></select>
-            </div>
-            <div class="filter-col">
-              <label>Houses:</label>
-              <div style="display:flex;gap:5px;">
-                <button class="btn-small btn-success" onclick="selectAll('houses')">All</button>
-                <button class="btn-small" onclick="clearAll('houses')">Clear</button>
-              </div>
-              <select id="houses" multiple></select>
-            </div>
-          </div>
+          <select id="houses" multiple></select>
         </div>
       </div>
     </div>
+  </div>
 
-    <!-- MANUAL MODE -->
-    <div id="manualMode" style="display:none;">
-      <label>Select Deck:</label>
-      <select id="manualDeckList" size="10" class="manual-deck-list"></select>
-      <button id="showManualBtn" disabled style="margin-top:10px;" onclick="showManualDeck()">Show Deck</button>
-    </div>
+  <div id="review" class="tab-content">
+    <p class="loading" id="loading">Loading decks from CSV…</p>
+    <div id="deckReviewList" class="deck-review-list"></div>
   </div>
 
   <div id="results"></div>
@@ -173,11 +177,13 @@ select[multiple]{height:130px;background:#2a2a2a;color:white;}
 
 <script>
 /* --------------------------------------------------------------
-   TOGGLE FILTERS
+   TAB SWITCHING
    -------------------------------------------------------------- */
-function toggleFilter(header){
-  const section = header.parentElement;
-  section.classList.toggle('collapsed');
+function openTab(tabName) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+  document.querySelector(`.tab[onclick="openTab('${tabName}')"]`).classList.add('active');
+  document.getElementById(tabName).classList.add('active');
 }
 
 /* --------------------------------------------------------------
@@ -317,13 +323,12 @@ fetch('decks_data_fixed.csv')
 
     document.getElementById('loading').textContent = `Loaded ${data.length} decks.`;
     document.getElementById('selectBtn').disabled = false;
-    document.getElementById('showManualBtn').disabled = false;
 
     document.getElementById('sasMinInput').placeholder = minSAS;
     document.getElementById('sasMaxInput').placeholder = maxSAS;
 
     fillFilters();
-    fillManualList();
+    populateDeckReview();
   })
   .catch(err=>{
     console.error(err);
@@ -356,30 +361,30 @@ function fillFilters(){
 }
 
 /* --------------------------------------------------------------
-   MANUAL DECK LIST
+   DECK REVIEW – ALL DECKS BY SET → NAME
    -------------------------------------------------------------- */
-function fillManualList(){
-  const list = document.getElementById('manualDeckList');
-  list.innerHTML = '';
-  const sorted = [...data].sort((a,b)=>a.name.localeCompare(b.name));
-  sorted.forEach(d=>{
-    const opt = document.createElement('option');
-    opt.value = d.uuid;
-    opt.textContent = `${d.name} (SAS: ${d.sas})`;
-    list.appendChild(opt);
+function populateDeckReview(){
+  const container = document.getElementById('deckReviewList');
+  container.innerHTML = '';
+
+  const sorted = [...data].sort((a,b) => {
+    if(a.set !== b.set) return a.set.localeCompare(b.set);
+    return a.name.localeCompare(b.name);
+  });
+
+  sorted.forEach(d => {
+    const hasErr = hasErrata(d);
+    const item = document.createElement('div');
+    item.className = 'deck-item';
+    item.onclick = () => renderDecks([d]);
+    item.innerHTML = `
+      <h3>${d.name} ${hasErr ? '<span class="errata-tag">(Errata)</span>' : ''}</h3>
+      <p>Set: ${d.set} | SAS: ${d.sas}</p>
+      <p>Houses: ${d.housesStr}</p>
+    `;
+    container.appendChild(item);
   });
 }
-
-/* --------------------------------------------------------------
-   MODE SWITCH
-   -------------------------------------------------------------- */
-document.querySelectorAll('input[name="mode"]').forEach(r=>{
-  r.addEventListener('change',()=>{
-    const mode = r.value;
-    document.getElementById('randomMode').style.display = mode==='random'?'block':'none';
-    document.getElementById('manualMode').style.display = mode==='manual'?'block':'none';
-  });
-});
 
 /* --------------------------------------------------------------
    UI helpers
@@ -436,15 +441,6 @@ function pickDecks(){
     }
   }
   renderDecks(chosen);
-}
-
-/* --------------------------------------------------------------
-   MANUAL DECK DISPLAY
-   -------------------------------------------------------------- */
-function showManualDeck(){
-  const uuid = document.getElementById('manualDeckList').value;
-  const deck = data.find(d=>d.uuid===uuid);
-  if(deck) renderDecks([deck]);
 }
 
 /* --------------------------------------------------------------
