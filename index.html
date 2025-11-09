@@ -99,7 +99,6 @@ select[multiple]{height:120px;background:#2a2a2a;color:white;}
 .deck-header .logos{display:flex;gap:6px;margin-bottom:6px;}
 .deck-header .logos img{width:22px;height:22px;border-radius:50%;}
 .deck-header h2{margin:0 0 3px 0;font-size:1.4rem;font-weight:bold;display:flex;align-items:center;gap:6px;}
-.deck-header .errata-tag{color:var(--errata);font-weight:bold;font-size:1rem;cursor:pointer;}
 .deck-header .deck-info{color:#bbb;font-size:0.9rem;margin:3px 0 0 0;}
 .deck-header .links{margin-top:6px;}
 .deck-header .links a{color:#90caf9;text-decoration:none;font-size:0.85rem;margin-right:16px;}
@@ -108,6 +107,14 @@ select[multiple]{height:120px;background:#2a2a2a;color:white;}
 .deck.collapsed .deck-header::after{content:'expand_less';}
 .deck-content{max-height:3000px;transition:max-height .5s ease;overflow:hidden;padding:18px;}
 .deck.collapsed .deck-content{max-height:0;padding:0 18px;}
+
+/* ERRATA TOGGLE BUTTON */
+.errata-toggle{
+  background:var(--errata);color:white;padding:6px 12px;
+  border:none;border-radius:6px;font-size:0.8rem;cursor:pointer;
+  font-weight:bold;margin-bottom:8px;
+}
+.errata-toggle.active{background:#ff1744;}
 
 /* HOUSE GRID */
 .houses-grid{display:grid;grid-template-columns:repeat(auto-fit, minmax(260px, 1fr));gap:16px;}
@@ -243,6 +250,15 @@ function togglePin(uuid) {
 }
 
 /* --------------------------------------------------------------
+   TOGGLE ERRATA FILTER (BUTTON IN CARD LIST)
+   -------------------------------------------------------------- */
+function toggleErrataFilter(uuid) {
+  event.stopPropagation();
+  errataFilterDeck = (errataFilterDeck === uuid) ? null : uuid;
+  renderSelectedDecks();
+}
+
+/* --------------------------------------------------------------
    SHOW MESSAGE
    -------------------------------------------------------------- */
 function showMessage(text, timeout = 3000) {
@@ -250,27 +266,6 @@ function showMessage(text, timeout = 3000) {
   msg.textContent = text;
   msg.style.display = 'block';
   setTimeout(() => msg.style.display = 'none', timeout);
-}
-
-/* --------------------------------------------------------------
-   TOGGLE ERRATA VIEW – OPENS + FILTERS
-   -------------------------------------------------------------- */
-function toggleErrataView(uuid) {
-  event.stopPropagation();
-
-  const deckDiv = document.querySelector(`.deck[data-uuid="${uuid}"]`);
-  if (!deckDiv) return;
-
-  // 1. OPEN DECK IF CLOSED
-  if (deckDiv.classList.contains('collapsed')) {
-    deckDiv.classList.remove('collapsed');
-  }
-
-  // 2. TOGGLE ERRATA FILTER
-  errataFilterDeck = (errataFilterDeck === uuid) ? null : uuid;
-
-  // 3. RE-RENDER
-  renderSelectedDecks();
 }
 
 /* --------------------------------------------------------------
@@ -533,7 +528,6 @@ function renderSelectedDecks() {
     deckDiv.dataset.uuid = d.uuid;
 
     const hasErr = hasErrata(d);
-    const errataTag = hasErr ? `<span class="errata-tag" onclick="toggleErrataView('${d.uuid}')">(Errata)</span>` : '';
     const isPinned = pinnedDecks.includes(d.uuid);
     const pinText = isPinned ? 'UNPIN' : 'PIN';
 
@@ -544,9 +538,7 @@ function renderSelectedDecks() {
           <div class="logos">
             ${d.housesStr.split(', ').slice(0,3).map(h => `<img src="icons/${h.toLowerCase().replace(' ', '-')}.png" onerror="this.style.display='none'">`).join('')}
           </div>
-          <h2>
-            ${d.name} ${errataTag}
-          </h2>
+          <h2>${d.name}</h2>
           <p class="deck-info">Set: ${d.set} | SAS: ${d.sas} | Houses: ${d.housesStr}</p>
           <div class="links">
             <a href="https://decksofkeyforge.com/decks/${d.uuid}" target="_blank">Decks of Keyforge</a>
@@ -555,6 +547,9 @@ function renderSelectedDecks() {
         </div>
       </div>
       <div class="deck-content">
+        ${hasErr ? `<button class="errata-toggle ${errataFilterDeck === d.uuid ? 'active' : ''}" onclick="event.stopPropagation(); toggleErrataFilter('${d.uuid}')">
+          ${errataFilterDeck === d.uuid ? 'Show All Cards' : 'Show Errata Only'}
+        </button>` : ''}
         <div class="houses-grid">
           ${Object.entries(d.cards).map(([house, cards]) => {
             const isErrataView = errataFilterDeck === d.uuid;
