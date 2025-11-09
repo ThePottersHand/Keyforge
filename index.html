@@ -216,6 +216,7 @@ let minSAS = Infinity, maxSAS = -Infinity;
 let selectedDecks = [null, null];
 let pinnedDecks = [];
 let errataFilterDeck = null;
+let openDeckUuids = new Set();  // ← Tracks which decks are open
 
 /* --------------------------------------------------------------
    TAB SWITCHING
@@ -234,7 +235,14 @@ function openTab(tabName) {
 function toggleCollapse(event) {
   const header = event.currentTarget;
   const deck = header.closest('.deck');
-  deck.classList.toggle('collapsed');
+  const uuid = deck.dataset.uuid;
+  if (deck.classList.contains('collapsed')) {
+    deck.classList.remove('collapsed');
+    openDeckUuids.add(uuid);
+  } else {
+    deck.classList.add('collapsed');
+    openDeckUuids.delete(uuid);
+  }
 }
 
 /* --------------------------------------------------------------
@@ -255,7 +263,7 @@ function togglePin(uuid) {
    TOGGLE ERRATA FILTER - IN CARD LIST
    -------------------------------------------------------------- */
 function toggleErrataFilter(uuid) {
-  event.stopPropagation();  // CRITICAL: Prevent collapse
+  event.stopPropagation();  // Prevent collapse
   errataFilterDeck = (errataFilterDeck === uuid) ? null : uuid;
   renderSelectedDecks();
 }
@@ -508,7 +516,7 @@ function replaceUnpinnedDeck(deck) {
 }
 
 /* --------------------------------------------------------------
-   RENDER SELECTED DECKS
+   RENDER SELECTED DECKS – PRESERVE OPEN STATE
    -------------------------------------------------------------- */
 function renderSelectedDecks() {
   const out = document.getElementById('results');
@@ -526,8 +534,15 @@ function renderSelectedDecks() {
     }
 
     const deckDiv = document.createElement('div');
-    deckDiv.className = 'deck collapsed';
+    deckDiv.className = 'deck';
     deckDiv.dataset.uuid = d.uuid;
+
+    // PRESERVE OPEN STATE
+    if (openDeckUuids.has(d.uuid)) {
+      deckDiv.classList.remove('collapsed');
+    } else {
+      deckDiv.classList.add('collapsed');
+    }
 
     const hasErr = hasErrata(d);
     const errataTag = hasErr ? '<span class="errata-tag">(Errata)</span>' : '';
