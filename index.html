@@ -16,79 +16,81 @@ body{font-family:Arial,sans-serif;background:var(--bg);color:var(--text);padding
 h1{color:#ffeb3b;text-align:center;margin-bottom:20px;font-size:2.2rem;}
 .controls{background:var(--card);padding:20px;border-radius:12px;margin-bottom:20px;box-shadow:0 4px 12px rgba(0,0,0,.4);}
 
-/* COLLAPSIBLE DECK */
-.deck{
-  background:var(--card);border-radius:12px;margin:20px 0;
+/* FIXED ACTION BAR */
+.action-bar{
+  background:var(--card);padding:16px;border-radius:12px;
+  box-shadow:0 4px 12px rgba(0,0,0,.4);margin-bottom:20px;
+  display:flex;gap:15px;align-items:center;flex-wrap:wrap;
+}
+.action-bar label{font-weight:bold;}
+.action-bar select{padding:10px;border-radius:8px;font-size:16px;flex:1 1 120px;}
+.action-bar button{
+  background:var(--primary);color:white;padding:12px 24px;
+  border:none;border-radius:8px;font-weight:bold;cursor:pointer;transition:.3s;
+  font-size:16px;flex:1 1 180px;
+}
+.action-bar button:hover{background:#b71c1c;}
+.action-bar button:disabled{background:#666;cursor:not-allowed;}
+
+/* COLLAPSIBLE FILTERS */
+.filter-section{
+  background:var(--card);border-radius:12px;margin-bottom:20px;
   box-shadow:0 4px 12px rgba(0,0,0,.4);
 }
-.deck-header{
-  cursor:pointer;padding:16px 20px;
-  border-bottom:1px solid #333;
+.filter-header{
+  display:flex;justify-content:space-between;align-items:center;
+  cursor:pointer;padding:14px 20px;font-weight:bold;font-size:1.1rem;
 }
-.deck-header h2{
-  margin:0 0 4px 0;font-size:1.6rem;font-weight:bold;
-  display:flex;align-items:center;gap:8px;
+.filter-header::after{content:'expand_more';font-family:'Material Icons';font-size:1.4rem;color:#aaa;}
+.filter-section.collapsed .filter-header::after{content:'expand_less';}
+.filter-content{
+  max-height:1000px;transition:max-height .4s ease;overflow:hidden;
+  padding:0 20px 20px;
 }
-.deck-header .errata-tag{
-  color:var(--errata);font-weight:bold;font-size:1.1rem;
-}
-.deck-header .deck-info{
-  color:#bbb;font-size:0.95rem;margin:4px 0 0 0;
-}
-.deck-header .links{
-  margin-top:8px;
-}
-.deck-header .links a{
-  color:#90caf9;text-decoration:none;font-size:0.9rem;margin-right:20px;
-}
+.filter-section.collapsed .filter-content{max-height:0;padding:0 20px;}
+
+/* FILTER GRID */
+.filter-grid{display:grid;grid-template-columns:1fr 1fr;gap:15px;}
+.filter-col{flex:1;}
+label{display:block;margin:12px 0 6px;font-weight:bold;font-size:1rem;}
+select,input{width:100%;padding:10px;margin:6px 0;border:none;border-radius:8px;font-size:16px;}
+input[type="number"]{width:100%;}
+select[multiple]{height:130px;background:#2a2a2a;color:white;}
+.btn-small{display:inline-block;width:auto;padding:6px 12px;margin:4px 2px;font-size:14px;border-radius:8px;}
+.btn-success{background:var(--success);color:white;}
+.btn-success:hover{background:#388e3c;}
+
+/* DECK */
+.deck{background:var(--card);border-radius:12px;margin:20px 0;box-shadow:0 4px 12px rgba(0,0,0,.4);}
+.deck-header{cursor:pointer;padding:16px 20px;border-bottom:1px solid #333;}
+.deck-header h2{margin:0 0 4px 0;font-size:1.6rem;font-weight:bold;display:flex;align-items:center;gap:8px;}
+.deck-header .errata-tag{color:var(--errata);font-weight:bold;font-size:1.1rem;}
+.deck-header .deck-info{color:#bbb;font-size:0.95rem;margin:4px 0 0 0;}
+.deck-header .links{margin-top:8px;}
+.deck-header .links a{color:#90caf9;text-decoration:none;font-size:0.9rem;margin-right:20px;}
 .deck-header .links a:hover{text-decoration:underline;}
-.deck-header::after{
-  content:'expand_more';font-family:'Material Icons';font-size:1.8rem;
-  color:#aaa;float:right;margin-top:-38px;
-}
+.deck-header::after{content:'expand_more';font-family:'Material Icons';font-size:1.8rem;color:#aaa;float:right;margin-top:-38px;}
 .deck.collapsed .deck-header::after{content:'expand_less';}
-.deck-content{
-  max-height:3000px;transition:max-height .5s ease;overflow:hidden;
-  padding:20px;
-}
+.deck-content{max-height:3000px;transition:max-height .5s ease;overflow:hidden;padding:20px;}
 .deck.collapsed .deck-content{max-height:0;padding:0 20px;}
 
 /* HOUSE GRID */
-.houses-grid{
-  display:grid;grid-template-columns:repeat(auto-fit, minmax(280px, 1fr));gap:20px;
-}
+.houses-grid{display:grid;grid-template-columns:repeat(auto-fit, minmax(280px, 1fr));gap:20px;}
 .house{text-align:center;}
 .house img{width:60px;height:60px;border-radius:50%;background:#333;padding:4px;}
 .house h3{margin:8px 0 4px;font-size:1.3rem;color:#ffeb3b;}
-.house-cards{
-  display:flex;flex-direction:column;gap:6px;text-align:left;
-}
-.card{
-  background:#2a2a2a;padding:6px 10px;border-radius:6px;font-size:0.92rem;
-}
+.house-cards{display:flex;flex-direction:column;gap:6px;text-align:left;}
+.card{background:#2a2a2a;padding:6px 10px;border-radius:6px;font-size:0.92rem;}
 .errata{color:var(--errata);font-weight:bold;}
 
-/* CONTROLS */
-.mode-toggle{display:flex;gap:15px;margin-bottom:15px;}
-.mode-toggle label input{margin-right:6px;}
-label{display:block;margin:12px 0 6px;font-weight:bold;font-size:1rem;}
-select,input,button{width:100%;padding:10px;margin:6px 0;border:none;border-radius:8px;font-size:16px;}
-input[type="number"]{width:100%;}
-select[multiple]{height:130px;background:#2a2a2a;color:white;}
-button{background:var(--primary);color:white;font-weight:bold;cursor:pointer;transition:.3s;}
-button:hover{background:#b71c1c;}
-.btn-small{display:inline-block;width:auto;padding:6px 12px;margin:4px 2px;font-size:14px;}
-.btn-success{background:var(--success);}
-.btn-success:hover{background:#388e3c;}
-.filter-grid{display:grid;grid-template-columns:1fr 1fr;gap:15px;}
-.filter-col{flex:1;}
+/* MISC */
 .loading{color:#ffeb3b;font-style:italic;text-align:center;margin-bottom:15px;}
 .help{font-size:.85em;color:#aaa;margin-top:4px;}
 .manual-deck-list{max-height:200px;overflow-y:auto;background:#2a2a2a;padding:10px;border-radius:8px;margin-top:10px;}
 @media(max-width:800px){
   .filter-grid{grid-template-columns:1fr;}
-  .houses-grid{grid-template-columns:1fr;}
-  .deck-header::after{margin-top:-34px;font-size:1.6rem;}
+  .action-bar{flex-direction:column;}
+  .action-bar select,.action-bar button{flex:1 1 100%;}
 }
 </style>
 <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
@@ -96,6 +98,16 @@ button:hover{background:#b71c1c;}
 <body>
 <div class="container">
   <h1>Keyforge Deck Selector</h1>
+
+  <!-- ACTION BAR: Always visible -->
+  <div class="action-bar">
+    <label>Number of Decks:</label>
+    <select id="numDecks">
+      <option value="1">1 Deck</option>
+      <option value="2">2 Decks</option>
+    </select>
+    <button id="selectBtn" disabled onclick="pickDecks()">Select Random Deck(s)</button>
+  </div>
 
   <div class="controls">
     <p class="loading" id="loading">Loading decks from CSV…</p>
@@ -106,53 +118,45 @@ button:hover{background:#b71c1c;}
       <label><input type="radio" name="mode" value="manual"> Manual</label>
     </div>
 
-    <!-- RANDOM MODE -->
+    <!-- COLLAPSIBLE FILTERS -->
     <div id="randomMode">
-      <div class="collapsible-header" onclick="toggleCollapse(this)">
-        Filters
-      </div>
-      <div class="collapsible-content">
-        <label>Number of Decks:</label>
-        <select id="numDecks">
-          <option value="1">1 Deck</option>
-          <option value="2">2 Decks</option>
-        </select>
-
-        <label>SAS Range:</label>
-        <div style="display:flex;gap:10px;align-items:center;">
-          <input type="number" id="sasMinInput" placeholder="Min" style="flex:1">
-          <span style="width:20px;text-align:center;">–</span>
-          <input type="number" id="sasMaxInput" placeholder="Max" style="flex:1">
+      <div class="filter-section collapsed">
+        <div class="filter-header" onclick="toggleFilter(this)">
+          Filters
         </div>
-        <div class="help">Leave blank for full range</div>
-
-        <div id="diffControl" style="display:none;margin-top:10px;">
-          <label>Max SAS Difference:</label>
-          <input type="number" id="maxDiffInput" min="0" max="30" value="5">
-        </div>
-
-        <div class="filter-grid">
-          <div class="filter-col">
-            <label>Sets:</label>
-            <div style="display:flex;gap:5px;">
-              <button class="btn-small btn-success" onclick="selectAll('sets')">All</button>
-              <button class="btn-small" onclick="clearAll('sets')">Clear</button>
-            </div>
-            <select id="sets" multiple></select>
+        <div class="filter-content">
+          <label>SAS Range:</label>
+          <div style="display:flex;gap:10px;align-items:center;">
+            <input type="number" id="sasMinInput" placeholder="Min" style="flex:1">
+            <span style="width:20px;text-align:center;">–</span>
+            <input type="number" id="sasMaxInput" placeholder="Max" style="flex:1">
           </div>
-          <div class="filter-col">
-            <label>Houses:</label>
-            <div style="display:flex;gap:5px;">
-              <button class="btn-small btn-success" onclick="selectAll('houses')">All</button>
-              <button class="btn-small" onclick="clearAll('houses')">Clear</button>
+          <div class="help">Leave blank for full range</div>
+
+          <div id="diffControl" style="display:none;margin-top:10px;">
+            <label>Max SAS Difference:</label>
+            <input type="number" id="maxDiffInput" min="0" max="30" value="5">
+          </div>
+
+          <div class="filter-grid">
+            <div class="filter-col">
+              <label>Sets:</label>
+              <div style="display:flex;gap:5px;">
+                <button class="btn-small btn-success" onclick="selectAll('sets')">All</button>
+                <button class="btn-small" onclick="clearAll('sets')">Clear</button>
+              </div>
+              <select id="sets" multiple></select>
             </div>
-            <select id="houses" multiple></select>
+            <div class="filter-col">
+              <label>Houses:</label>
+              <div style="display:flex;gap:5px;">
+                <button class="btn-small btn-success" onclick="selectAll('houses')">All</button>
+                <button class="btn-small" onclick="clearAll('houses')">Clear</button>
+              </div>
+              <select id="houses" multiple></select>
+            </div>
           </div>
         </div>
-
-        <button id="selectBtn" disabled style="margin-top:20px;font-size:18px;padding:14px;" onclick="pickDecks()">
-          Select Random Deck(s)
-        </button>
       </div>
     </div>
 
@@ -169,7 +173,15 @@ button:hover{background:#b71c1c;}
 
 <script>
 /* --------------------------------------------------------------
-   COLLAPSE TOGGLE
+   TOGGLE FILTERS
+   -------------------------------------------------------------- */
+function toggleFilter(header){
+  const section = header.parentElement;
+  section.classList.toggle('collapsed');
+}
+
+/* --------------------------------------------------------------
+   COLLAPSE DECK
    -------------------------------------------------------------- */
 function toggleCollapse(header){
   const deck = header.closest('.deck');
@@ -177,7 +189,7 @@ function toggleCollapse(header){
 }
 
 /* --------------------------------------------------------------
-   FULL ERRATA – Verified against Master Rulebook 18.2
+   FULL ERRATA
    -------------------------------------------------------------- */
 const ERRATA = {
   "Arcenomometer": "Enhance ÆmberÆmber.\n(These icons have already been added to cards in your deck.)\nAction: During your opponent’s next turn, each time they play a card, they lose 1Æmber.",
@@ -446,7 +458,7 @@ function hasErrata(deck){
 }
 
 /* --------------------------------------------------------------
-   RENDER DECKS – FULL HEADER + COLLAPSIBLE CARDS
+   RENDER DECKS
    -------------------------------------------------------------- */
 function renderDecks(decks){
   const out = document.getElementById('results');
