@@ -89,8 +89,10 @@ select[multiple]{height:120px;background:#2a2a2a;color:white;}
 .deck{background:var(--card);border-radius:12px;margin:16px 0;box-shadow:0 4px 12px rgba(0,0,0,.4);}
 .deck-header{cursor:pointer;padding:14px 18px;border-bottom:1px solid #333;display:flex;justify-content:space-between;align-items:flex-start;}
 .deck-header .info{flex:1;}
+.deck-header .logos{display:flex;gap:6px;margin-bottom:6px;}
+.deck-header .logos img{width:22px;height:22px;border-radius:50%;}
 .deck-header h2{margin:0 0 3px 0;font-size:1.4rem;font-weight:bold;display:flex;align-items:center;gap:6px;}
-.deck-header .errata-tag{color:var(--errata);font-weight:bold;font-size:1rem;}
+.deck-header .errata-tag{color:var(--errata);font-weight:bold;font-size:1rem;cursor:pointer;}
 .deck-header .deck-info{color:#bbb;font-size:0.9rem;margin:3px 0 0 0;}
 .deck-header .links{margin-top:6px;}
 .deck-header .links a{color:#90caf9;text-decoration:none;font-size:0.85rem;margin-right:16px;}
@@ -115,9 +117,6 @@ select[multiple]{height:120px;background:#2a2a2a;color:white;}
 .house-cards{display:flex;flex-direction:column;gap:5px;text-align:left;}
 .card{background:#2a2a2a;padding:5px 8px;border-radius:6px;font-size:0.88rem;}
 .errata{color:var(--errata);font-weight:bold;}
-
-/* HOUSE LOGOS IN HEADER */
-.house-logo{width:20px;height:20px;border-radius:50%;}
 
 /* MESSAGES */
 .message{color:#ff5252;text-align:center;margin:12px 0;font-weight:bold;}
@@ -208,6 +207,7 @@ let data = [], filteredData = [], sets = new Set(), houses = new Set();
 let minSAS = Infinity, maxSAS = -Infinity;
 let selectedDecks = [null, null];  // [deck0, deck1]
 let pinnedDecks = [];              // UUIDs of pinned decks
+let showErrataOnly = false;
 
 /* --------------------------------------------------------------
    TAB SWITCHING
@@ -232,7 +232,7 @@ function toggleCollapse(header){
    PIN DECK
    -------------------------------------------------------------- */
 function togglePin(uuid) {
-  event.stopPropagation(); // Prevent collapse
+  event.stopPropagation();
   const index = pinnedDecks.indexOf(uuid);
   if (index === -1) {
     pinnedDecks.push(uuid);
@@ -250,6 +250,18 @@ function showMessage(text, timeout = 3000) {
   msg.textContent = text;
   msg.style.display = 'block';
   setTimeout(() => msg.style.display = 'none', timeout);
+}
+
+/* --------------------------------------------------------------
+   TOGGLE ERRATA-ONLY VIEW
+   -------------------------------------------------------------- */
+function toggleErrataView(deckUuid) {
+  event.stopPropagation();
+  const deck = selectedDecks.find(d => d?.uuid === deckUuid);
+  if (!deck) return;
+
+  showErrataOnly = !showErrataOnly;
+  renderSelectedDecks();
 }
 
 /* --------------------------------------------------------------
@@ -378,7 +390,7 @@ fetch('decks_data_fixed.csv')
     document.getElementById('sasMaxInput').placeholder = maxSAS;
 
     fillFilters();
-    applyFilters(); // Initial filter
+    applyFilters();
   })
   .catch(err=>{
     console.error(err);
@@ -459,7 +471,7 @@ function populateDeckReview(){
 }
 
 /* --------------------------------------------------------------
-   REPLACE UNPINNED DECK
+   REPLACE UNPINNED DECK – FILL SLOT 2 FIRST
    -------------------------------------------------------------- */
 function replaceUnpinnedDeck(deck) {
   if (pinnedDecks.length === 2) {
@@ -467,8 +479,28 @@ function replaceUnpinnedDeck(deck) {
     return;
   }
 
-  const slot = pinnedDecks.length === 0 ? 0 :
-               pinnedDecks[0] === selectedDecks[0]?.uuid ? 1 : 0;
+  const num = +document.getElementById('numDecks').value;
+  let slot = -1;
+
+  // Prefer empty slot 2
+  if (num === 2 && !selectedDecks[1]) {
+    slot = 1;
+  } else if (num === 2 && !selectedDecks[0]) {
+    slot = 0;
+  } else {
+    // Find first unpinned
+    for (let i = 0; i < num; i++) {
+      if (!pinnedDecks.includes(selectedDecks[i]?.uuid)) {
+        slot = i;
+        break;
+      }
+    }
+  }
+
+  if (slot === -1) {
+    showMessage("No available slot");
+    return;
+  }
 
   selectedDecks[slot] = deck;
   renderSelectedDecks();
@@ -497,15 +529,17 @@ function renderSelectedDecks() {
     deckDiv.dataset.uuid = d.uuid;
 
     const hasErr = hasErrata(d);
-    const errataTag = hasErr ? '<span class="errata-tag">(Errata)</span>' : '';
+    const errataTag = hasErr ? `<span class="errata-tag" onclick="toggleErrataView('${d.uuid}')">(Errata)</span>` : '';
     const isPinned = pinnedDecks.includes(d.uuid);
     const pinText = isPinned ? 'UNPIN' : 'PIN';
 
     deckDiv.innerHTML = `
       <div class="deck-header" onclick="toggleCollapse(this)">
         <div class="info">
+          <div class="logos">
+            ${d.housesStr.split(', ').slice(0,3).map(h => `<img src="icons/${h.toLowerCase().replace(' ', '-')}.png" onerror="this.style.display='none'">`).join('')}
+          </div>
           <h2>
-            ${d.housesStr.split(', ').map(h => `<img src="icons/${h.toLowerCase().replace(' ', '-')}.png" class="house-logo" onerror="this.style.display='none'">`).join('')}
             ${d.name} ${errataTag}
           </h2>
           <p class="deck-info">Set: ${d.set} | SAS: ${d.sas} | Houses: ${d.housesStr}</p>
@@ -519,14 +553,16 @@ function renderSelectedDecks() {
       <div class="deck-content">
         <div class="houses-grid">
           ${Object.entries(d.cards).map(([house, cards]) => {
+            const filteredCards = showErrataOnly ? cards.filter(c => ERRATA[c]) : cards;
+            if (filteredCards.length === 0 && showErrataOnly) return '';
             const hKey = house.toLowerCase();
             const iconName = HOUSE_ICON_MAP[hKey] || 'default';
             return `
               <div class="house">
                 <img src="icons/${iconName}.png" alt="${house}" onerror="this.src='icons/default.png'">
-                <h3>${house} (${cards.length})</h3>
+                <h3>${house} (${filteredCards.length})</h3>
                 <div class="house-cards">
-                  ${cards.map(c => `
+                  ${filteredCards.map(c => `
                     <div class="card">
                       ${ERRATA[c] ? `<span class="errata">${c}</span><br><small>${ERRATA[c].replace(/\n/g,'<br>')}</small>` : c}
                     </div>
@@ -578,7 +614,6 @@ function pickDecks(){
     }
   }
 
-  // Fill slots
   let idx = 0;
   for(let i=0; i<num; i++){
     if(pinnedDecks.includes(selectedDecks[i]?.uuid)) continue;
