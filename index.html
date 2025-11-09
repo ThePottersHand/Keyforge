@@ -215,8 +215,8 @@ let data = [], filteredData = [], sets = new Set(), houses = new Set();
 let minSAS = Infinity, maxSAS = -Infinity;
 let selectedDecks = [null, null];
 let pinnedDecks = [];
-let errataFilterDeck = null;
-let openDeckUuids = new Set();  // ← Tracks which decks are open
+let openDeckUuids = new Set();
+let errataFilterDecks = new Map();  // ← UUID → true/false
 
 /* --------------------------------------------------------------
    TAB SWITCHING
@@ -230,7 +230,7 @@ function openTab(tabName) {
 }
 
 /* --------------------------------------------------------------
-   COLLAPSE DECK - ONLY ON HEADER
+   COLLAPSE DECK
    -------------------------------------------------------------- */
 function toggleCollapse(event) {
   const header = event.currentTarget;
@@ -260,11 +260,12 @@ function togglePin(uuid) {
 }
 
 /* --------------------------------------------------------------
-   TOGGLE ERRATA FILTER - IN CARD LIST
+   TOGGLE ERRATA FILTER - PER DECK
    -------------------------------------------------------------- */
 function toggleErrataFilter(uuid) {
-  event.stopPropagation();  // Prevent collapse
-  errataFilterDeck = (errataFilterDeck === uuid) ? null : uuid;
+  event.stopPropagation();
+  const current = errataFilterDecks.get(uuid) || false;
+  errataFilterDecks.set(uuid, !current);
   renderSelectedDecks();
 }
 
@@ -516,7 +517,7 @@ function replaceUnpinnedDeck(deck) {
 }
 
 /* --------------------------------------------------------------
-   RENDER SELECTED DECKS – PRESERVE OPEN STATE
+   RENDER SELECTED DECKS – PER-DECK ERRATA FILTER
    -------------------------------------------------------------- */
 function renderSelectedDecks() {
   const out = document.getElementById('results');
@@ -548,7 +549,7 @@ function renderSelectedDecks() {
     const errataTag = hasErr ? '<span class="errata-tag">(Errata)</span>' : '';
     const isPinned = pinnedDecks.includes(d.uuid);
     const pinText = isPinned ? 'UNPIN' : 'PIN';
-    const isErrataView = errataFilterDeck === d.uuid;
+    const isErrataView = errataFilterDecks.get(d.uuid) || false;
 
     deckDiv.innerHTML = `
       <div class="deck-header" onclick="toggleCollapse(event)">
